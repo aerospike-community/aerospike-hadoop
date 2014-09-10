@@ -1,5 +1,20 @@
 .gradle
-build/
+bin
+build
+target
+.settings
+.classpath
+.project
+*.iml
+*.ipr
+*.iws
+*.log
+metastore_db
+.idea
+/hdfs/data
+/repository-hdfs/data/*
+/mr/src/main/resources/esh-build.properties
+/pig/tmp-pig/*
 
 # Ignore Gradle GUI config
 gradle-app.setting
