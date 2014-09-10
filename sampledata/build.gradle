@@ -1,0 +1,13 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'com.aerospike.hadoop.sampledata.SampleData'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile "com.aerospike:aerospike-client:3.+"
+}
+

@@ -1,0 +1,13 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile "com.aerospike:aerospike-client:3.+"
+  compile "org.apache.hadoop:hadoop-common:2.+"
+  compile "org.apache.hadoop:hadoop-mapreduce-client-jobclient:2.+"
+}
+
