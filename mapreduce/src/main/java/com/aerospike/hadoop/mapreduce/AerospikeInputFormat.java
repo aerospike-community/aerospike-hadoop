@@ -20,55 +20,72 @@ package com.aerospike.hadoop.mapreduce;
 
 import java.io.IOException;
 
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.CompressionCodecFactory;
-import org.apache.hadoop.io.compress.SplittableCompressionCodec;
-
-import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.FileSplit;
+import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobConfigurable;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 
+import com.aerospike.client.AerospikeClient;
+import com.aerospike.client.policy.ClientPolicy;
+
 /**
- * An {@link InputFormat} for plain text files. Files are broken into lines.
- * Either linefeed or carriage-return are used to signal end of line. Each line
- * is divided into key and value parts by a separator byte. If no such a byte
- * exists, the key will be the entire line and value will be empty.
+ * An {@link InputFormat} for data stored in an Aerospike database.
+ * Records are selected with an integer range.
+ * Returns the record key and selected bin content as value.
  */
-@InterfaceAudience.Public
-@InterfaceStability.Stable
-public class AerospikeInputFormat extends FileInputFormat<Text, Text>
-  implements JobConfigurable {
+public class AerospikeInputFormat<KK, VV> implements InputFormat<KK, VV> {
 
-  private CompressionCodecFactory compressionCodecs = null;
-  
-  public void configure(JobConf conf) {
-    compressionCodecs = new CompressionCodecFactory(conf);
-  }
-  
-  protected boolean isSplitable(FileSystem fs, Path file) {
-    final CompressionCodec codec = compressionCodecs.getCodec(file);
-    if (null == codec) {
-      return true;
-    }
-    return codec instanceof SplittableCompressionCodec;
-  }
-  
-  public RecordReader<Text, Text> getRecordReader(InputSplit genericSplit,
-                                                  JobConf job,
-                                                  Reporter reporter)
-    throws IOException {
-    
-    reporter.setStatus(genericSplit.toString());
-    return new AerospikeRecordReader(job, (FileSplit) genericSplit);
-  }
+	private static String host = "127.0.0.1";
+	private static int port = 3000;
+	private static String namespace = "test";
 
+	public static void setInputPaths(String h, int p, String ns) {
+		host = h;
+		port = p;
+		namespace = ns;
+	}
+
+	public abstract RecordReader<KK, VV> getRecordReader(InputSplit split,
+			JobConf job, Reporter reporter) throws IOException;
+
+	public InputSplit[] getSplits(JobConf job, int numSplits)
+        throws IOException {
+
+		// connect to Citrusleaf Server
+		ClientPolicy policy = new ClientPolicy();
+		AerospikeClient cc = new AerospikeClient(policy, host, port);
+		if (cc == null) {
+			System.out.println(" Cluster " + host + ":" + port +
+                               " could not be contacted.");
+			System.out.println(" Unable to get names of cluster nodes.");
+			System.exit(0);
+			// return null;
+		}
+		// cc.connect();
+		try {
+			// Sleep so that the partition hashmap is created by the client
+			Thread.sleep(3000);
+		} catch (Exception e) {
+			System.out.println(" Exception raised when sleeping " + e);
+		}
+		
+		// retrieve names of citrusleaf nodes, as needed by the scanNode
+		CLConnectionManager connMgr = cc.getconnMgr();
+		ArrayList<String> nodes = (ArrayList<String>) connMgr.getNodeNameList();
+		numSplits = nodes.size();
+		
+		AerospikeSplit[] splits = new AerospikeSplit[numSplits];
+		for (int i = 0; i < numSplits; i++) {
+			// get InetSocketAddress of the node
+			CLNode node = connMgr.getNodeFromNodeName(nodes.get(i));
+			InetSocketAddress ip = node.primaryAddress;
+			splits[i] = new AerospikeSplit(nodes.get(i), ip.getHostName(),
+                                    ip.getPort(), namespace);
+			// System.out.println("spilt: " + nodes.get(i));
+		}
+		return splits;
+	}
 }
