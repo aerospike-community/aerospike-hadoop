@@ -19,6 +19,7 @@
 package com.aerospike.hadoop.mapreduce;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -29,23 +30,29 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 
 import com.aerospike.client.AerospikeClient;
+import com.aerospike.client.AerospikeException;
+import com.aerospike.client.cluster.Node;
+import com.aerospike.client.Host;
 import com.aerospike.client.policy.ClientPolicy;
+import com.aerospike.client.policy.ScanPolicy;
 
 /**
  * An {@link InputFormat} for data stored in an Aerospike database.
  * Records are selected with an integer range.
  * Returns the record key and selected bin content as value.
  */
-public class AerospikeInputFormat<KK, VV> implements InputFormat<KK, VV> {
+public abstract class AerospikeInputFormat<KK, VV> implements InputFormat<KK, VV> {
 
 	private static String host = "127.0.0.1";
 	private static int port = 3000;
 	private static String namespace = "test";
+    private static String setName = null;
 
-	public static void setInputPaths(String h, int p, String ns) {
+	public static void setInputPaths(String h, int p, String ns, String sn) {
 		host = h;
 		port = p;
 		namespace = ns;
+        setName = sn;
 	}
 
 	public abstract RecordReader<KK, VV> getRecordReader(InputSplit split,
@@ -55,36 +62,39 @@ public class AerospikeInputFormat<KK, VV> implements InputFormat<KK, VV> {
         throws IOException {
 
 		// connect to Citrusleaf Server
-		ClientPolicy policy = new ClientPolicy();
-		AerospikeClient cc = new AerospikeClient(policy, host, port);
-		if (cc == null) {
+        AerospikeClient client = null;
+        try {
+            client = new AerospikeClient(host, port);
+        } catch (AerospikeException ex) {
+            System.out.println(" Exception connecting to cluster; " + ex);
+			System.exit(0);
+        }
+
+		if (client == null) {
 			System.out.println(" Cluster " + host + ":" + port +
                                " could not be contacted.");
 			System.out.println(" Unable to get names of cluster nodes.");
 			System.exit(0);
 			// return null;
 		}
-		// cc.connect();
+		// client.connect();
 		try {
 			// Sleep so that the partition hashmap is created by the client
 			Thread.sleep(3000);
 		} catch (Exception e) {
 			System.out.println(" Exception raised when sleeping " + e);
 		}
-		
-		// retrieve names of citrusleaf nodes, as needed by the scanNode
-		CLConnectionManager connMgr = cc.getconnMgr();
-		ArrayList<String> nodes = (ArrayList<String>) connMgr.getNodeNameList();
-		numSplits = nodes.size();
-		
-		AerospikeSplit[] splits = new AerospikeSplit[numSplits];
-		for (int i = 0; i < numSplits; i++) {
-			// get InetSocketAddress of the node
-			CLNode node = connMgr.getNodeFromNodeName(nodes.get(i));
-			InetSocketAddress ip = node.primaryAddress;
-			splits[i] = new AerospikeSplit(nodes.get(i), ip.getHostName(),
-                                    ip.getPort(), namespace);
-			// System.out.println("spilt: " + nodes.get(i));
+
+        Node[] nodes = client.getNodes();
+        int nsplits = nodes.length;
+		AerospikeSplit[] splits = new AerospikeSplit[nsplits];
+		for (int ii = 0; ii < nsplits; ii++) {
+            Node node = nodes[ii];
+            String nodeName = node.getName();
+            Host host = node.getHost();
+            splits[ii] = new AerospikeSplit(nodeName, host.name, host.port,
+                                            namespace, setName);
+			// System.out.println("spilt: " + nodes.get(ii));
 		}
 		return splits;
 	}

@@ -23,25 +23,26 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.UTF8;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.InputSplit;
 
-public class AerospikeSplit
-    extends org.apache.hadoop.mapreduce.InputSplit
-    implements InputSplit {
+public class AerospikeSplit extends org.apache.hadoop.mapreduce.InputSplit implements InputSplit {
 	private String node;
 	private String host;
 	private int port;
 	private String namespace;
+	private String setName;
 
 	AerospikeSplit() {
 	}
 
-	public AerospikeSplit(String node, String host, int port, String ns) {
+	public AerospikeSplit(String node, String host, int port,
+                          String ns, String setName) {
 		this.node = node;
 		this.host = host;
 		this.port = port;
 		this.namespace = ns;
+		this.setName = setName;
 	}
 
 	public String getNode() {
@@ -60,13 +61,17 @@ public class AerospikeSplit
 		return namespace;
 	}
 
+	public String getSetName() {
+		return setName;
+	}
+
 	public long getLength() {
 		return 1;
 	}
 
 	public String toString() {
-		return "node:" + node + ", host:" + host + ", port" + port + ", ns:"
-				+ namespace;
+		return "node:" + node + ", host:" + host + ", port:" + port + ", ns:"
+            + namespace + ", setName:" + setName;
 	}
 
 	// //////////////////////////////////////////
@@ -74,17 +79,19 @@ public class AerospikeSplit
 	// //////////////////////////////////////////
 
 	public void write(DataOutput out) throws IOException {
-		UTF8.writeString(out, node);
-		UTF8.writeString(out, host);
+		Text.writeString(out, node);
+		Text.writeString(out, host);
 		out.writeInt(port);
-		UTF8.writeString(out, namespace);
+		Text.writeString(out, namespace);
+		Text.writeString(out, setName);
 	}
 
 	public void readFields(DataInput in) throws IOException {
-		node = new String(UTF8.readString(in));
-		host = new String(UTF8.readString(in));
+		node = new String(Text.readString(in));
+		host = new String(Text.readString(in));
 		port = in.readInt();
-		namespace = new String(UTF8.readString(in));
+		namespace = new String(Text.readString(in));
+		setName = new String(Text.readString(in));
 	}
 
 	public String[] getLocations() throws IOException {

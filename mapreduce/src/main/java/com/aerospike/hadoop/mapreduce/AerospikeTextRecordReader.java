@@ -29,56 +29,30 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.RecordReader;
 
 import com.aerospike.client.AerospikeClient;
+import com.aerospike.client.AerospikeException;
+import com.aerospike.client.Key;
+import com.aerospike.client.policy.ScanPolicy;
+import com.aerospike.client.Record;
 import com.aerospike.client.ScanCallback;
 
-public class AerospikeTextRecordReader
-    implements RecordReader<LongWritable, Text> {
+public class AerospikeTextRecordReader implements RecordReader<LongWritable, Text> {
 
 	private ASSCanReader in;
 
-	private LinkedBlockingQueue<Record> queue =
-        new LinkedBlockingQueue<Record>();
+	private LinkedBlockingQueue<Record> queue = new LinkedBlockingQueue<Record>();
 	private boolean isScanFinished = false;
 	private boolean isError = false;
 	private boolean isScanRunning = false;
 	
-	
-
-	public static class Record {
-		public String namespace;
-		public String set;
-		public byte[] digest;
-		public Map<String, Object> value;
-		public int generation;
-		public int ttl;
-		public Object user_data;
-
-		Record(String namespace, String set, byte[] digest,
-				Map<String, Object> value, int generation, int ttl,
-				Object user_data) {
-			this.namespace = namespace;
-			this.set = set;
-			this.digest = digest;
-			this.value = value;
-			this.generation = generation;
-			this.ttl = ttl;
-			this.user_data = user_data;
-		}
-
-	}
-
 	public class CallBack implements ScanCallback {
-		public void scanCallback(String namespace, String set, byte[] digest,
-				Map<String, Object> value, int generation, int ttl,
-				Object user_data) {
-			Record rec = new Record(namespace, set, digest, value, generation,
-					ttl, user_data);
+        @Override
+        public void scanCallback(Key key, Record record) {
 			try {
-				queue.put(rec);
+				queue.put(record);
 			} catch (Exception e) {
-				System.out.println("ClRecordREeader: Exception raised while inserting record into queue.");
+				System.out.println("scanCallback: Exception raised while inserting record into queue.");
 			}
-		}
+        }
 	}
 
 	/*
@@ -100,24 +74,34 @@ public class AerospikeTextRecordReader
 		String host;
 		int port;
 		String namespace;
+		String setName;
 
-		ASSCanReader(String node, String host, int port, String ns) {
+		ASSCanReader(String node, String host, int port, String ns, String setName) {
 			this.node = node;
 			this.host = host;
 			this.port = port;
 			this.namespace = ns;
+			this.setName = setName;
 		}
 
 		public void run() {
-			AerospikeClient cc = new AerospikeClient(host, port);
-			if (cc == null) {
+			AerospikeClient client;
+            try {
+                client = new AerospikeClient(host, port);
+            }
+            catch (AerospikeException ex) {
+				System.out.println("Exception opening client " + ex);
+                System.exit(1);
+            }
+
+			if (client == null) {
 				System.out.println(" Cluster " + host + ":" + port + " could not be contacted.");
 				System.out.println(" Unable to scan cluster nodes.");
 				isError = true;
 				return;
 			}
 
-			cc.connect();
+			// client.connect();
 			try {
 				// Sleep so that the partition hashmap is created by the client
 				Thread.sleep(3000);
@@ -125,13 +109,18 @@ public class AerospikeTextRecordReader
 				System.out.println(" Exception raised when sleeping " + e);
 			}
 
-            ScanPolicy scanPolicy = new ScanPolicy();
-
-			CallBack cb = new CallBack();
-			isScanRunning = true;
-			cc.scanNode(scanPolicy, node, namespace, setName, cb);
-			isScanFinished = true;
-			// System.out.println("Scan finished");
+            try {
+                ScanPolicy scanPolicy = new ScanPolicy();
+                CallBack cb = new CallBack();
+                isScanRunning = true;
+                client.scanNode(scanPolicy, node, namespace, setName, cb);
+                isScanFinished = true;
+                // System.out.println("Scan finished");
+            }
+            catch (AerospikeException ex) {
+				System.out.println("Exception opening client " + ex);
+                System.exit(1);
+            }
 		}
 	}
 
@@ -141,7 +130,8 @@ public class AerospikeTextRecordReader
 		final String host = split.getHost();
 		final int port = split.getPort();
 		final String namespace = split.getNameSpace();
-		in = new ASSCanReader(node, host, port, namespace);
+		final String setName = split.getSetName();
+		in = new ASSCanReader(node, host, port, namespace, setName);
 		in.start();
 		
 		// System.out.println("node: " + node);
@@ -189,8 +179,7 @@ public class AerospikeTextRecordReader
 			}
 
 			key.set(1);
-			System.out.println("next: " + rec.digest.toString() + " " +
-                               rec.generation);
+			System.out.println("next: " + rec.toString());
 			value.set("" + rec.generation);
 		} catch (Exception e) {
 			System.out.println("Exception");

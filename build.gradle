@@ -1,6 +1,9 @@
 subprojects{
-	apply plugin:'java'
-	repositories{
-		mavenCentral()
-	}
+    apply plugin:'java'
+    repositories {
+        mavenCentral()
+    }
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
 }
