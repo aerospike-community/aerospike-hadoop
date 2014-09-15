@@ -85,7 +85,7 @@ public class AerospikeTextRecordReader implements RecordReader<LongWritable, Tex
 		}
 
 		public void run() {
-			AerospikeClient client;
+			AerospikeClient client = null;
             try {
                 client = new AerospikeClient(host, port);
             }
