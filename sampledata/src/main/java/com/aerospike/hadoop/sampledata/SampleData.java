@@ -18,6 +18,9 @@
 
 package com.aerospike.hadoop.sampledata;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
@@ -29,62 +32,64 @@ import com.aerospike.client.task.IndexTask;
 
 public class SampleData {
 
-    // aql> CREATE INDEX bin1ndx ON test.sample (bin1) NUMERIC
+	// aql> CREATE INDEX bin1ndx ON test.sample (bin1) NUMERIC
 
-    public static void run(String[] args) throws Exception {
+	private static final Log log = LogFactory.getLog(SampleData.class);
+
+	public static void run(String[] args) throws Exception {
 
 		ClientPolicy policy = new ClientPolicy();
 		policy.user = "";
 		policy.password = "";
 		policy.failIfNotConnected = true;
 
-        String host = "localhost";
-        int port = 3000;
+		String host = "localhost";
+		int port = 3000;
 		
 		AerospikeClient client = new AerospikeClient(policy, host, port);
 
-        String namespace = "test";
-        String setName = "sample";
+		String namespace = "test";
+		String setName = "sample";
 
-        String bin1name = "bin1";
-        String ndxname = "bin1ndx";
+		String bin1name = "bin1";
+		String ndxname = "bin1ndx";
         
-        IndexTask task =
-            client.createIndex(null, namespace, setName,
-                               ndxname, bin1name, IndexType.NUMERIC);
+		IndexTask task =
+			client.createIndex(null, namespace, setName,
+												 ndxname, bin1name, IndexType.NUMERIC);
 
-        task.waitTillComplete();
-        System.out.println("created secondary index on " + bin1name);
+		task.waitTillComplete();
+		log.info("created secondary index on " + bin1name);
 
-        WritePolicy writePolicy = new WritePolicy();
+		WritePolicy writePolicy = new WritePolicy();
 
-        int nrecs = 10 * 1000;
+		int nrecs = 10 * 1000;
 
-        for (int ii = 0; ii < nrecs; ++ii) {
+		for (int ii = 0; ii < nrecs; ++ii) {
 
-            String keystr = "key-" + ii;
+			String keystr = "key-" + ii;
 
-            Key key = new Key(namespace, setName, keystr);
-            Bin bin1 = new Bin(bin1name, ii);
-            Bin bin2 = new Bin("bin2", "value2");
+			Key key = new Key(namespace, setName, keystr);
+			Bin bin1 = new Bin(bin1name, ii);
+			Bin bin2 = new Bin("bin2", "value2");
 
-            client.put(writePolicy, key, bin1, bin2);
-        }
+			client.put(writePolicy, key, bin1, bin2);
+		}
 
-        System.out.println("inserted " + nrecs + " records");
-    }
+		log.info("inserted " + nrecs + " records");
+	}
 
-    public static void main(String[] args) {
+	public static void main(String[] args) {
 
-        try {
-            System.out.println("starting");
-            run(args);
-            System.out.println("finished");
-        } catch (Exception ex) {
+		try {
+			log.info("starting");
+			run(args);
+			log.info("finished");
+		} catch (Exception ex) {
 
-            System.out.println(ex.getMessage());
-            ex.printStackTrace();
-        }
-    }
+			log.error(ex.getMessage());
+			ex.printStackTrace();
+		}
+	}
 
 }

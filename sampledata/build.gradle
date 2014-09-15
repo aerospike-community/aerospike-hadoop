@@ -9,5 +9,6 @@ repositories {
 
 dependencies {
   compile "com.aerospike:aerospike-client:3.+"
+  compile "org.apache.hadoop:hadoop-common:2.+"
 }
 
