@@ -26,7 +26,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.InputSplit;
 
-public class AerospikeSplit extends org.apache.hadoop.mapreduce.InputSplit implements InputSplit {
+public class AerospikeSplit
+	extends org.apache.hadoop.mapreduce.InputSplit
+	implements InputSplit {
+
 	private String node;
 	private String host;
 	private int port;
@@ -37,7 +40,7 @@ public class AerospikeSplit extends org.apache.hadoop.mapreduce.InputSplit imple
 	}
 
 	public AerospikeSplit(String node, String host, int port,
-                          String ns, String setName) {
+												String ns, String setName) {
 		this.node = node;
 		this.host = host;
 		this.port = port;
@@ -71,12 +74,8 @@ public class AerospikeSplit extends org.apache.hadoop.mapreduce.InputSplit imple
 
 	public String toString() {
 		return "node:" + node + ", host:" + host + ", port:" + port + ", ns:"
-            + namespace + ", setName:" + setName;
+			+ namespace + ", setName:" + setName;
 	}
-
-	// //////////////////////////////////////////
-	// Writable methods
-	// //////////////////////////////////////////
 
 	public void write(DataOutput out) throws IOException {
 		Text.writeString(out, node);

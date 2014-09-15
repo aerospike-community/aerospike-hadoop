@@ -29,12 +29,16 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Reporter;
 
-public class AerospikeTextInputFormat extends AerospikeInputFormat<LongWritable, Text> implements JobConfigurable {
+public class AerospikeTextInputFormat
+	extends AerospikeInputFormat<LongWritable, Text>
+	implements JobConfigurable {
 
-    public void configure(JobConf conf) {
-    }
+	public void configure(JobConf conf) {
+	}
   
-    public RecordReader<LongWritable, Text> getRecordReader(InputSplit genericSplit, JobConf job, Reporter reporter) throws IOException {
-        return new AerospikeTextRecordReader(job, (AerospikeSplit) genericSplit);
-    }
+	public RecordReader<LongWritable, Text> getRecordReader(
+      InputSplit genericSplit, JobConf job, Reporter reporter)
+		throws IOException {
+		return new AerospikeTextRecordReader(job, (AerospikeSplit) genericSplit);
+	}
 }

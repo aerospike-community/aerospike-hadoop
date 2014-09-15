@@ -35,7 +35,8 @@ import com.aerospike.client.policy.ScanPolicy;
 import com.aerospike.client.Record;
 import com.aerospike.client.ScanCallback;
 
-public class AerospikeTextRecordReader implements RecordReader<LongWritable, Text> {
+public class AerospikeTextRecordReader
+	implements RecordReader<LongWritable, Text> {
 
 	private ASSCanReader in;
 
@@ -45,38 +46,26 @@ public class AerospikeTextRecordReader implements RecordReader<LongWritable, Tex
 	private boolean isScanRunning = false;
 	
 	public class CallBack implements ScanCallback {
-        @Override
-        public void scanCallback(Key key, Record record) {
+		@Override
+		public void scanCallback(Key key, Record record) throws AerospikeException {
 			try {
 				queue.put(record);
-			} catch (Exception e) {
-				System.out.println("scanCallback: Exception raised while inserting record into queue.");
+			} catch (Exception ex) {
+				throw new AerospikeException("exception in queue.put", ex);
 			}
-        }
+		}
 	}
-
-	/*
-	private static class ScanObject {
-		public int n_objects;
-		public ArrayList<String> startValue;
-		public ArrayList<String> startBin;
-		public boolean failed;
-		public boolean delay;
-		public boolean nobindata;
-		public int n_keys;
-		public int num_bins;
-		public boolean[] key_found;
-	}
-	*/
 
 	public class ASSCanReader extends java.lang.Thread {
+
 		String node;
 		String host;
 		int port;
 		String namespace;
 		String setName;
 
-		ASSCanReader(String node, String host, int port, String ns, String setName) {
+		ASSCanReader(String node, String host, int port,
+								 String ns, String setName) {
 			this.node = node;
 			this.host = host;
 			this.port = port;
@@ -85,47 +74,29 @@ public class AerospikeTextRecordReader implements RecordReader<LongWritable, Tex
 		}
 
 		public void run() {
-			AerospikeClient client = null;
-            try {
-                client = new AerospikeClient(host, port);
-            }
-            catch (AerospikeException ex) {
-				System.out.println("Exception opening client " + ex);
-                System.exit(1);
-            }
-
-			if (client == null) {
-				System.out.println(" Cluster " + host + ":" + port + " could not be contacted.");
-				System.out.println(" Unable to scan cluster nodes.");
+			try {
+				AerospikeClient client = new AerospikeClient(host, port);
+				try {
+					ScanPolicy scanPolicy = new ScanPolicy();
+					CallBack cb = new CallBack();
+					isScanRunning = true;
+					client.scanNode(scanPolicy, node, namespace, setName, cb);
+					isScanFinished = true;
+					// System.out.println("Scan finished");
+				}
+				finally {
+					client.close();
+				}
+			}
+			catch (Exception ex) {
 				isError = true;
 				return;
 			}
-
-			// client.connect();
-			try {
-				// Sleep so that the partition hashmap is created by the client
-				Thread.sleep(3000);
-			} catch (Exception e) {
-				System.out.println(" Exception raised when sleeping " + e);
-			}
-
-            try {
-                ScanPolicy scanPolicy = new ScanPolicy();
-                CallBack cb = new CallBack();
-                isScanRunning = true;
-                client.scanNode(scanPolicy, node, namespace, setName, cb);
-                isScanFinished = true;
-                // System.out.println("Scan finished");
-            }
-            catch (AerospikeException ex) {
-				System.out.println("Exception opening client " + ex);
-                System.exit(1);
-            }
 		}
 	}
 
 	public AerospikeTextRecordReader(Configuration job, AerospikeSplit split)
-        throws IOException {
+		throws IOException {
 		final String node = split.getNode();
 		final String host = split.getHost();
 		final int port = split.getPort();
@@ -133,7 +104,6 @@ public class AerospikeTextRecordReader implements RecordReader<LongWritable, Tex
 		final String setName = split.getSetName();
 		in = new ASSCanReader(node, host, port, namespace, setName);
 		in.start();
-		
 		// System.out.println("node: " + node);
 	}
 
@@ -146,7 +116,7 @@ public class AerospikeTextRecordReader implements RecordReader<LongWritable, Tex
 	}
 
 	public synchronized boolean next(LongWritable key, Text value)
-			throws IOException {
+		throws IOException {
 		final int waitMSec = 1000;
 		int trials = 5;
 
@@ -181,8 +151,9 @@ public class AerospikeTextRecordReader implements RecordReader<LongWritable, Tex
 			key.set(1);
 			System.out.println("next: " + rec.toString());
 			value.set("" + rec.generation);
-		} catch (Exception e) {
-			System.out.println("Exception");
+		}
+		catch (Exception ex) {
+			throw new IOException("exception in AerospikeTextRecordReader.next", ex);
 		}
 		return true;
 	}
@@ -202,8 +173,10 @@ public class AerospikeTextRecordReader implements RecordReader<LongWritable, Tex
 		if (in != null) {
 			try {
 				in.join();
-			} catch (Exception e) {
-				System.out.println("Scan thread got interrupted.");
+			}
+			catch (Exception ex) {
+				throw new IOException("exception in AerospikeTextRecordReader.close",
+															ex);
 			}
 			in = null;
 		}

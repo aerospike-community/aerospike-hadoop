@@ -41,61 +41,49 @@ import com.aerospike.client.policy.ScanPolicy;
  * Records are selected with an integer range.
  * Returns the record key and selected bin content as value.
  */
-public abstract class AerospikeInputFormat<KK, VV> implements InputFormat<KK, VV> {
+public abstract class AerospikeInputFormat<KK, VV>
+	implements InputFormat<KK, VV> {
 
 	private static String host = "127.0.0.1";
 	private static int port = 3000;
 	private static String namespace = "test";
-    private static String setName = null;
+	private static String setName = null;
 
 	public static void setInputPaths(String h, int p, String ns, String sn) {
 		host = h;
 		port = p;
 		namespace = ns;
-        setName = sn;
+		setName = sn;
 	}
 
-	public abstract RecordReader<KK, VV> getRecordReader(InputSplit split,
-			JobConf job, Reporter reporter) throws IOException;
+	public abstract RecordReader<KK, VV> getRecordReader(
+      InputSplit split, JobConf job, Reporter reporter)
+		throws IOException;
 
 	public InputSplit[] getSplits(JobConf job, int numSplits)
-        throws IOException {
-
-		// connect to Citrusleaf Server
-        AerospikeClient client = null;
-        try {
-            client = new AerospikeClient(host, port);
-        } catch (AerospikeException ex) {
-            System.out.println(" Exception connecting to cluster; " + ex);
-			System.exit(0);
-        }
-
-		if (client == null) {
-			System.out.println(" Cluster " + host + ":" + port +
-                               " could not be contacted.");
-			System.out.println(" Unable to get names of cluster nodes.");
-			System.exit(0);
-			// return null;
-		}
-		// client.connect();
+		throws IOException {
 		try {
-			// Sleep so that the partition hashmap is created by the client
-			Thread.sleep(3000);
-		} catch (Exception e) {
-			System.out.println(" Exception raised when sleeping " + e);
+			AerospikeClient client = new AerospikeClient(host, port);
+			try {
+				Node[] nodes = client.getNodes();
+				int nsplits = nodes.length;
+				AerospikeSplit[] splits = new AerospikeSplit[nsplits];
+				for (int ii = 0; ii < nsplits; ii++) {
+					Node node = nodes[ii];
+					String nodeName = node.getName();
+					Host host = node.getHost();
+					splits[ii] = new AerospikeSplit(nodeName, host.name, host.port,
+																					namespace, setName);
+					// System.out.println("spilt: " + nodes.get(ii));
+				}
+				return splits;
+			}
+			finally {
+				client.close();
+			}
 		}
-
-        Node[] nodes = client.getNodes();
-        int nsplits = nodes.length;
-		AerospikeSplit[] splits = new AerospikeSplit[nsplits];
-		for (int ii = 0; ii < nsplits; ii++) {
-            Node node = nodes[ii];
-            String nodeName = node.getName();
-            Host host = node.getHost();
-            splits[ii] = new AerospikeSplit(nodeName, host.name, host.port,
-                                            namespace, setName);
-			// System.out.println("spilt: " + nodes.get(ii));
+		catch (Exception ex) {
+			throw new IOException("exception in getSplits", ex);
 		}
-		return splits;
 	}
 }
