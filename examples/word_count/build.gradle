@@ -1,0 +1,13 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'com.aerospike.hadoop.examples.wordcount.WordCount'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile "org.apache.hadoop:hadoop-common:2.+"
+}
+

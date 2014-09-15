@@ -1,9 +1,8 @@
 
-* Old API did connect, sleep(3000), scan.  Does modern API need such a
-  pattern?
+* Make WordCount example.
 
-* Error handling is random; survey existing connectors and mimic best
-  practices.
+* Make IntegerSum example.
 
-* Gradle or Maven for our build?
+* Add new/old API hooks to InputFormat.
 
+* Create OutputFormat.
