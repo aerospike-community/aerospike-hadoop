@@ -21,6 +21,9 @@ package com.aerospike.hadoop.mapreduce;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.InputFormat;
@@ -43,6 +46,8 @@ import com.aerospike.client.policy.ScanPolicy;
  */
 public abstract class AerospikeInputFormat<KK, VV>
 	implements InputFormat<KK, VV> {
+
+	private static final Log log = LogFactory.getLog(AerospikeInputFormat.class);
 
 	private static String host = "127.0.0.1";
 	private static int port = 3000;
@@ -74,7 +79,7 @@ public abstract class AerospikeInputFormat<KK, VV>
 					Host host = node.getHost();
 					splits[ii] = new AerospikeSplit(nodeName, host.name, host.port,
 																					namespace, setName);
-					// System.out.println("spilt: " + nodes.get(ii));
+					log.info("split: " + node);
 				}
 				return splits;
 			}

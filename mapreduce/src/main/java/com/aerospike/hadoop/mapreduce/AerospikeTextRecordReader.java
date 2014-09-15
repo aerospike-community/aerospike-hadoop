@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -37,6 +40,9 @@ import com.aerospike.client.ScanCallback;
 
 public class AerospikeTextRecordReader
 	implements RecordReader<LongWritable, Text> {
+
+	private static final Log log =
+		LogFactory.getLog(AerospikeTextRecordReader.class);
 
 	private ASSCanReader in;
 
@@ -79,10 +85,11 @@ public class AerospikeTextRecordReader
 				try {
 					ScanPolicy scanPolicy = new ScanPolicy();
 					CallBack cb = new CallBack();
+					log.info("scan starting");
 					isScanRunning = true;
 					client.scanNode(scanPolicy, node, namespace, setName, cb);
 					isScanFinished = true;
-					// System.out.println("Scan finished");
+					log.info("scan finished");
 				}
 				finally {
 					client.close();
@@ -104,7 +111,7 @@ public class AerospikeTextRecordReader
 		final String setName = split.getSetName();
 		in = new ASSCanReader(node, host, port, namespace, setName);
 		in.start();
-		// System.out.println("node: " + node);
+		log.info("node: " + node);
 	}
 
 	public LongWritable createKey() {
@@ -133,10 +140,10 @@ public class AerospikeTextRecordReader
 			
 				if (!isScanFinished && queue.size() == 0) {
 					if (trials == 0) {
-						System.out.println("Scan timeout");
+						log.error("SCAN TIMEOUT");
 						return false;
 					}
-					System.out.println("Queue empty: waiting...");
+					log.info("queue empty: waiting...");
 					Thread.sleep(waitMSec);
 					trials--;
 				} else if (isScanFinished && queue.size() == 0) {
@@ -149,7 +156,7 @@ public class AerospikeTextRecordReader
 			}
 
 			key.set(1);
-			System.out.println("next: " + rec.toString());
+			log.info("next: " + rec.toString());
 			value.set("" + rec.generation);
 		}
 		catch (Exception ex) {
