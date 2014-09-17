@@ -15,6 +15,13 @@ Setup Target Input Text File
     chmod 644 /tmp/input
 
 
+Start Aerospike
+----------------------------------------------------------------
+
+    cd ~/aerospike/aerospike-server
+    make start
+
+
 Setup Sample Data
 ----------------------------------------------------------------
 
@@ -25,6 +32,7 @@ Setup Sample Data
 
     ./gradlew sampledata:run \
         -PappArgs="['localhost:3000:test:sample', 'seq-int', '10000']"
+
 
 Running Examples
 ----------------------------------------------------------------
@@ -52,7 +60,6 @@ Running Examples
         ./examples/word_count/build/libs/word_count.jar \
         localhost:3000:test:sample:bin1 \
         /tmp/output
-
 
     # Inspect the results.
     $HADOOP_PREFIX/bin/hadoop fs -ls /tmp/output

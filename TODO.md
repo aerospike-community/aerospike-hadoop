@@ -1,8 +1,7 @@
-
-* Make WordCount example.
+* Add new/old API hooks to InputFormat.
 
 * Make IntegerSum example.
 
-* Add new/old API hooks to InputFormat.
+* Add scan by secondary index.
 
 * Create OutputFormat.
