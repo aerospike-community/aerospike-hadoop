@@ -53,13 +53,16 @@ public abstract class AerospikeInputFormat<KK, VV>
 	private static int port = 3000;
 	private static String namespace = "test";
 	private static String setName = null;
+	private static String binName = null;
 
-	public static void setInputPaths(String h, int p, String ns, String sn) {
-		log.info(String.format("setInputPaths: %s %d %s %s", h, p, ns, sn));
+	public static void setInputPaths(String h, int p,
+																	 String ns, String sn, String bn) {
+		log.info(String.format("setInputPaths: %s %d %s %s %s", h, p, ns, sn, bn));
 		host = h;
 		port = p;
 		namespace = ns;
 		setName = sn;
+		binName = bn;
 	}
 
 	public abstract RecordReader<KK, VV> getRecordReader(
@@ -69,7 +72,8 @@ public abstract class AerospikeInputFormat<KK, VV>
 	public InputSplit[] getSplits(JobConf job, int numSplits)
 		throws IOException {
 		try {
-			log.info(String.format("using: %s %d %s %s", host, port, namespace, setName));
+			log.info(String.format("using: %s %d %s %s %s",
+														 host, port, namespace, setName, binName));
 			AerospikeClient client = new AerospikeClient(host, port);
 			try {
 				Node[] nodes = client.getNodes();
@@ -84,7 +88,7 @@ public abstract class AerospikeInputFormat<KK, VV>
 					String nodeName = node.getName();
 					Host nodehost = node.getHost();
 					splits[ii] = new AerospikeSplit(nodeName, nodehost.name, nodehost.port,
-																					namespace, setName);
+																					namespace, setName, binName);
 					log.info("split: " + node);
 				}
 				return splits;

@@ -18,6 +18,9 @@
 
 package com.aerospike.hadoop.sampledata;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -36,6 +39,13 @@ public class SampleData {
 
 	private static final Log log = LogFactory.getLog(SampleData.class);
 
+	private static String host;
+	private static int port;
+	private static String namespace;
+	private static String setName;
+	private static AerospikeClient client;
+	private static WritePolicy writePolicy;
+
 	public static void run(String[] args) throws Exception {
 
 		int argi = 0;
@@ -44,18 +54,47 @@ public class SampleData {
 
 		log.info(String.format("saw %s %s", asspec, dataType));
 
+		String[] inparam = asspec.split(":");
+		host = inparam[0];
+		port = Integer.parseInt(inparam[1]);
+		namespace = inparam[2];
+		setName = inparam[3];
+
 		ClientPolicy policy = new ClientPolicy();
 		policy.user = "";
 		policy.password = "";
 		policy.failIfNotConnected = true;
 
-		String host = "localhost";
-		int port = 3000;
-		
-		AerospikeClient client = new AerospikeClient(policy, host, port);
+		client = new AerospikeClient(policy, host, port);
 
-		String namespace = "test";
-		String setName = "sample";
+		writePolicy = new WritePolicy();
+
+		if (dataType.equals("text-file"))
+			runTextFile(args, argi);
+		else if (dataType.equals("seq-int"))
+			runSeqInt(args, argi);
+		else
+			throw new RuntimeException(String.format("unknown dataType \"%s\"",
+																							 dataType));
+	}
+
+	public static void runTextFile(String[] args, int argi) throws Exception {
+
+		String path = args[argi++];
+		String bin1name = "bin1";
+		int nrecs = 0;
+		BufferedReader br = new BufferedReader(new FileReader(path));
+		for (String line; (line = br.readLine()) != null; ) {
+			Key key = new Key(namespace, setName, nrecs++);
+			Bin bin1 = new Bin(bin1name, line);
+			client.put(writePolicy, key, bin1);
+		}
+		log.info("inserted " + nrecs + " records");
+	}
+
+	public static void runSeqInt(String[] args, int argi) throws Exception {
+
+		int nrecs = Integer.parseInt(args[argi++]);
 
 		String bin1name = "bin1";
 		String ndxname = "bin1ndx";
@@ -66,10 +105,6 @@ public class SampleData {
 
 		task.waitTillComplete();
 		log.info("created secondary index on " + bin1name);
-
-		WritePolicy writePolicy = new WritePolicy();
-
-		int nrecs = 10 * 1000;
 
 		for (int ii = 0; ii < nrecs; ++ii) {
 

@@ -61,7 +61,6 @@ public class WordCount {
 			while (tokenizer.hasMoreTokens()) {
 				word.set(tokenizer.nextToken());
 				output.collect(word, one);
-				System.out.println("map: " + word + " " + one);
 			}
 		}
 	}
@@ -102,7 +101,8 @@ public class WordCount {
 		int port = Integer.parseInt(inparam[1]);
 		String namespace = inparam[2];
 		String setName = inparam[3];
-		AerospikeInputFormat.setInputPaths(host, port, namespace, setName);
+		String binName = inparam[4];
+		AerospikeInputFormat.setInputPaths(host, port, namespace, setName, binName);
 		
 		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
 

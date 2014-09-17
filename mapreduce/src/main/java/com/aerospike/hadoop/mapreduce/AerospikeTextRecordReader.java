@@ -50,6 +50,7 @@ public class AerospikeTextRecordReader
 	private boolean isScanFinished = false;
 	private boolean isError = false;
 	private boolean isScanRunning = false;
+	private String binName;
 	
 	public class CallBack implements ScanCallback {
 		@Override
@@ -109,6 +110,7 @@ public class AerospikeTextRecordReader
 		final int port = split.getPort();
 		final String namespace = split.getNameSpace();
 		final String setName = split.getSetName();
+		this.binName = split.getBinName();
 		in = new ASSCanReader(node, host, port, namespace, setName);
 		in.start();
 		log.info("node: " + node);
@@ -154,10 +156,11 @@ public class AerospikeTextRecordReader
 				}
 				
 			}
-
+			
 			key.set(1);
-			log.info("next: " + rec.toString());
-			value.set("" + rec.generation);
+			String val = (String) rec.bins.get(binName);
+			value.set(val);
+			// log.info("next: " + val);
 		}
 		catch (Exception ex) {
 			throw new IOException("exception in AerospikeTextRecordReader.next", ex);

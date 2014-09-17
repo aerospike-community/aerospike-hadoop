@@ -10,7 +10,7 @@ Setup Target Input Text File
 ----------------------------------------------------------------
 
     # Make a copy of /var/log/messages
-    sudo cp /var/log/messages /tmp
+    sudo cp /var/log/messages /tmp/input
     sudo chown $USER:$USER /tmp/input
     chmod 644 /tmp/input
 
@@ -19,7 +19,12 @@ Setup Sample Data
 ----------------------------------------------------------------
 
     ./gradlew sampledata:run \
-       -PappArgs="['localhost:3000:test:sample', 'insertTextFile', '/tmp/input']"
+        -PappArgs="['localhost:3000:test:sample:bin1', \
+                    'text-file', \
+                    '/tmp/input']"
+
+    ./gradlew sampledata:run \
+        -PappArgs="['localhost:3000:test:sample', 'seq-int', '10000']"
 
 Running Examples
 ----------------------------------------------------------------
@@ -45,7 +50,7 @@ Running Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/word_count/build/libs/word_count.jar \
-        localhost:3000:test:sample \
+        localhost:3000:test:sample:bin1 \
         /tmp/output
 
 
@@ -53,7 +58,7 @@ Running Examples
     $HADOOP_PREFIX/bin/hadoop fs -ls /tmp/output
     rm -rf /tmp/output
     $HADOOP_PREFIX/bin/hadoop fs -copyToLocal /tmp/output /tmp
-    less /tmp/output/part-r-00000
+    less /tmp/output/part-00000
 
     # Stop HDFS
     $HADOOP_PREFIX/sbin/stop-dfs.sh

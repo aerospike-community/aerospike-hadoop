@@ -35,17 +35,19 @@ public class AerospikeSplit
 	private int port;
 	private String namespace;
 	private String setName;
+	private String binName;
 
 	AerospikeSplit() {
 	}
 
 	public AerospikeSplit(String node, String host, int port,
-												String ns, String setName) {
+												String ns, String setName, String binName) {
 		this.node = node;
 		this.host = host;
 		this.port = port;
 		this.namespace = ns;
 		this.setName = setName;
+		this.binName = binName;
 	}
 
 	public String getNode() {
@@ -68,13 +70,17 @@ public class AerospikeSplit
 		return setName;
 	}
 
+	public String getBinName() {
+		return binName;
+	}
+
 	public long getLength() {
 		return 1;
 	}
 
 	public String toString() {
 		return "node:" + node + ", host:" + host + ", port:" + port + ", ns:"
-			+ namespace + ", setName:" + setName;
+			+ namespace + ", setName:" + setName + ", binName:" + binName;
 	}
 
 	public void write(DataOutput out) throws IOException {
@@ -83,6 +89,7 @@ public class AerospikeSplit
 		out.writeInt(port);
 		Text.writeString(out, namespace);
 		Text.writeString(out, setName);
+		Text.writeString(out, binName);
 	}
 
 	public void readFields(DataInput in) throws IOException {
@@ -91,6 +98,7 @@ public class AerospikeSplit
 		port = in.readInt();
 		namespace = new String(Text.readString(in));
 		setName = new String(Text.readString(in));
+		binName = new String(Text.readString(in));
 	}
 
 	public String[] getLocations() throws IOException {
