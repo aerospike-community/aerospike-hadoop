@@ -1,3 +1,17 @@
+Install Hadoop
+----------------------------------------------------------------
+
+    export HADOOPVER=2.5.1
+
+    cd /usr/local/dist
+    wget http://mirrors.ibiblio.org/apache/hadoop/common/stable/hadoop-${HADOOPVER}.tar.gz
+    cd /usr/local
+    tar xvfz /usr/local/dist/hadoop-${HADOOPVER}.tar.gz
+    ln -s hadoop-${HADOOPVER} hadoop
+    
+    export HADOOP_PREFIX=/usr/local/hadoop
+
+
 Building
 ----------------------------------------------------------------
 
