@@ -12,3 +12,8 @@ dependencies {
   compile "org.apache.hadoop:hadoop-common:2.+"
 }
 
+run {  
+    if ( project.hasProperty("appArgs") ) {  
+        args Eval.me(appArgs)  
+    }  
+}

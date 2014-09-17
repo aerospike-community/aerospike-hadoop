@@ -10,10 +10,12 @@ repositories {
 dependencies {
   compile "org.apache.hadoop:hadoop-common:2.+"
   compile "org.apache.hadoop:hadoop-mapreduce-client-jobclient:2.+"
+  compile project(':mapreduce')
 }
 
 jar {
     manifest {
         attributes 'Main-Class': 'com.aerospike.hadoop.examples.wordcount.WordCount'
     }
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
 }

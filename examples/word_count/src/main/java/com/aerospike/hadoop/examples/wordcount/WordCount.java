@@ -19,81 +19,101 @@
 package com.aerospike.hadoop.examples.wordcount;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-
 import org.apache.hadoop.util.GenericOptionsParser;
+
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.Mapper;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reducer;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.TextOutputFormat;
+
+import com.aerospike.hadoop.mapreduce.AerospikeInputFormat;
+import com.aerospike.hadoop.mapreduce.AerospikeTextInputFormat;
 
 public class WordCount {
 
 	private static final Log log = LogFactory.getLog(WordCount.class);
 
-  public static class TokenizerMapper 
-       extends Mapper<Object, Text, Text, IntWritable>{
-    
-    private final static IntWritable one = new IntWritable(1);
-    private Text word = new Text();
-      
-    public void map(Object key, Text value, Context context
-                    ) throws IOException, InterruptedException {
-      StringTokenizer itr = new StringTokenizer(value.toString());
-      while (itr.hasMoreTokens()) {
-        word.set(itr.nextToken());
-        context.write(word, one);
-      }
-    }
-  }
-  
-  public static class IntSumReducer 
-       extends Reducer<Text,IntWritable,Text,IntWritable> {
-    private IntWritable result = new IntWritable();
+	public static class Map extends MapReduceBase implements
+			Mapper<LongWritable, Text, Text, IntWritable> {
+		private final static IntWritable one = new IntWritable(1);
+		private Text word = new Text();
 
-    public void reduce(Text key, Iterable<IntWritable> values, 
-                       Context context
-                       ) throws IOException, InterruptedException {
-      int sum = 0;
-      for (IntWritable val : values) {
-        sum += val.get();
-      }
-      result.set(sum);
-      context.write(key, result);
-    }
-  }
+		public void map(LongWritable key, Text value,
+				OutputCollector<Text, IntWritable> output, Reporter reporter)
+				throws IOException {
+			String line = value.toString();
+			StringTokenizer tokenizer = new StringTokenizer(line);
+			while (tokenizer.hasMoreTokens()) {
+				word.set(tokenizer.nextToken());
+				output.collect(word, one);
+				System.out.println("map: " + word + " " + one);
+			}
+		}
+	}
 
-  public static void main(String[] args) throws Exception {
-    Configuration conf = new Configuration();
-    String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+	public static class Reduce extends MapReduceBase implements
+			Reducer<Text, IntWritable, Text, IntWritable> {
+				
+		public void reduce(Text key, Iterator<IntWritable> values,
+				OutputCollector<Text, IntWritable> output, Reporter reporter)
+				throws IOException {
+			int sum = 0;
+			while (values.hasNext()) {
+				sum += values.next().get();
+			}
+			output.collect(key, new IntWritable(sum));
+		}
+	}
+
+	public static void main(String[] args) throws Exception {
+
 		log.info("starting");
-    if (otherArgs.length < 2) {
-      System.err.println("Usage: wordcount <in> [<in>...] <out>");
-      System.exit(2);
-    }
-    Job job = new Job(conf, "word count");
-    job.setJarByClass(WordCount.class);
-    job.setMapperClass(TokenizerMapper.class);
-    job.setCombinerClass(IntSumReducer.class);
-    job.setReducerClass(IntSumReducer.class);
-    job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(IntWritable.class);
-    for (int i = 0; i < otherArgs.length - 1; ++i) {
-      FileInputFormat.addInputPath(job, new Path(otherArgs[i]));
-    }
-    FileOutputFormat.setOutputPath(job,
-      new Path(otherArgs[otherArgs.length - 1]));
+
+		JobConf conf = new JobConf(WordCount.class);
+		conf.setJobName("AerospikeWordCount");
+
+		conf.setOutputKeyClass(Text.class);
+		conf.setOutputValueClass(IntWritable.class);
+
+		conf.setMapperClass(Map.class);
+		conf.setCombinerClass(Reduce.class);
+		conf.setReducerClass(Reduce.class);
+		// conf.setNumMapTasks(0);
+		conf.setInputFormat(AerospikeTextInputFormat.class);
+		conf.setOutputFormat(TextOutputFormat.class);
+
+		String[] inparam = args[0].split(":");
+		String host = inparam[0];
+		int port = Integer.parseInt(inparam[1]);
+		String namespace = inparam[2];
+		String setName = inparam[3];
+		AerospikeInputFormat.setInputPaths(host, port, namespace, setName);
+		
+		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+
+		JobClient.runJob(conf);
+
 		log.info("finished");
-    System.exit(job.waitForCompletion(true) ? 0 : 1);
-  }
+
+		/*
+		boolean success = job.waitForCompletion(true);
+		log.info("finished with " + success);
+    System.exit(success ? 0 : 1);
+		*/
+	}
 }

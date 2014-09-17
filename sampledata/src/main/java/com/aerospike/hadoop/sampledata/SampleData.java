@@ -38,6 +38,12 @@ public class SampleData {
 
 	public static void run(String[] args) throws Exception {
 
+		int argi = 0;
+		String asspec = args[argi++];
+		String dataType = args[argi++];
+
+		log.info(String.format("saw %s %s", asspec, dataType));
+
 		ClientPolicy policy = new ClientPolicy();
 		policy.user = "";
 		policy.password = "";

@@ -55,6 +55,7 @@ public abstract class AerospikeInputFormat<KK, VV>
 	private static String setName = null;
 
 	public static void setInputPaths(String h, int p, String ns, String sn) {
+		log.info(String.format("setInputPaths: %s %d %s %s", h, p, ns, sn));
 		host = h;
 		port = p;
 		namespace = ns;
@@ -68,16 +69,21 @@ public abstract class AerospikeInputFormat<KK, VV>
 	public InputSplit[] getSplits(JobConf job, int numSplits)
 		throws IOException {
 		try {
+			log.info(String.format("using: %s %d %s %s", host, port, namespace, setName));
 			AerospikeClient client = new AerospikeClient(host, port);
 			try {
 				Node[] nodes = client.getNodes();
 				int nsplits = nodes.length;
+				if (nsplits == 0) {
+					throw new IOException("no Aerospike nodes found");
+				}
+				log.info(String.format("found %d nodes", nsplits));
 				AerospikeSplit[] splits = new AerospikeSplit[nsplits];
 				for (int ii = 0; ii < nsplits; ii++) {
 					Node node = nodes[ii];
 					String nodeName = node.getName();
-					Host host = node.getHost();
-					splits[ii] = new AerospikeSplit(nodeName, host.name, host.port,
+					Host nodehost = node.getHost();
+					splits[ii] = new AerospikeSplit(nodeName, nodehost.name, nodehost.port,
 																					namespace, setName);
 					log.info("split: " + node);
 				}
