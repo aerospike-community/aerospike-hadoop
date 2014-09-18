@@ -44,13 +44,17 @@ Start Aerospike
 Setup Sample Data
 ----------------------------------------------------------------
 
+    # Loads a text file for word_count demo.
     ./gradlew sampledata:run \
         -PappArgs="['localhost:3000:test:sample:bin1', \
                     'text-file', \
                     '/tmp/input']"
 
+    # Generates sequential integers for int_sum demo.
     ./gradlew sampledata:run \
-        -PappArgs="['localhost:3000:test:sample:bin1', 'seq-int', '10000']"
+        -PappArgs="['localhost:3000:test:sample:bin1', \
+                    'seq-int', \
+                    '10000']"
 
 
 Running Examples
@@ -73,6 +77,8 @@ Running Examples
 
     # Run the Hadoop job.
     cd ~/aerospike/aerospike-hadoop
+
+    # Run the word_count example (Old Hadoop API)
     $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
     $HADOOP_PREFIX/bin/hadoop \
         jar \
@@ -80,11 +86,21 @@ Running Examples
         localhost:3000:test:sample:bin1 \
         /tmp/output
 
+    # -- OR --
+
+    # Run the int_sum example (New Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/int_sum/build/libs/int_sum.jar \
+        localhost:3000:test:sample:bin1 \
+        /tmp/output
+
     # Inspect the results.
     $HADOOP_PREFIX/bin/hadoop fs -ls /tmp/output
     rm -rf /tmp/output
     $HADOOP_PREFIX/bin/hadoop fs -copyToLocal /tmp/output /tmp
-    less /tmp/output/part-00000
+    less /tmp/output/part*00000
 
     # Stop HDFS
     $HADOOP_PREFIX/sbin/stop-dfs.sh

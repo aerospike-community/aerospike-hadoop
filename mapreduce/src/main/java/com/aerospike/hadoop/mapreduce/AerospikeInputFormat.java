@@ -35,6 +35,7 @@ import org.apache.hadoop.mapred.Reporter;
 
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -61,20 +62,26 @@ public abstract class AerospikeInputFormat<KK, VV>
 	private static String setName = null;
 	private static String binName = null;
 
+	public static String INPUT_SPEC = "aerospike.input.spec";
+
 	// Handles column spec strings like: "localhost:3000:test:sample:bin1"
 	//
-	public static void setInputPaths(String colspec) {
+	public static void parse_spec(String colspec) {
 		String[] inparam = colspec.split(":");
 		host = inparam[0];
 		port = Integer.parseInt(inparam[1]);
 		namespace = inparam[2];
 		setName = inparam[3];
 		binName = inparam[4];
-		log.info(String.format("setting: %s %d %s %s %s",
+		log.info(String.format("parse_spec: %s %d %s %s %s",
 													 host, port, namespace, setName, binName));
 	}
 
 	// ---------------- NEW API ----------------
+
+  public static void addInputSpec(Job job, String spec) {
+		parse_spec(spec);
+  }
 
 	public List<InputSplit> getSplits(JobContext context) throws IOException {
 		// Delegate to the old API.
@@ -88,6 +95,10 @@ public abstract class AerospikeInputFormat<KK, VV>
 		throws IOException, InterruptedException;
 
 	// ---------------- OLD API ----------------
+
+	public static void setInputPaths(String colspec) {
+		parse_spec(colspec);
+	}
 
 	public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf job, int numSplits)
 		throws IOException {

@@ -16,7 +16,7 @@
  * permissions and limitations under the License.
  */
 
-package com.aerospike.hadoop.examples.wordcount;
+package com.aerospike.hadoop.examples.intsum;
 
 import java.io.IOException;
 import java.util.StringTokenizer;
@@ -32,7 +32,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import org.apache.hadoop.util.GenericOptionsParser;
@@ -85,15 +84,18 @@ public class IntSum {
       System.err.println("Usage: intsum <in> <out>");
       System.exit(2);
     }
+
+    @SuppressWarnings("deprecation")
     Job job = new Job(conf, "AerospikeIntSum");
     job.setJarByClass(IntSum.class);
+    job.setInputFormatClass(AerospikeTextInputFormat.class);
     job.setMapperClass(TokenizerMapper.class);
     job.setCombinerClass(IntSumReducer.class);
     job.setReducerClass(IntSumReducer.class);
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(IntWritable.class);
 
-		AerospikeTextInputFormat.addInputPath(job, otherArgs[0]);
+		AerospikeTextInputFormat.addInputSpec(job, otherArgs[0]);
 
     FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 

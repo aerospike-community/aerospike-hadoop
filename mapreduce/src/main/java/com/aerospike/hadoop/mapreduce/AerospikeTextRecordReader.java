@@ -29,7 +29,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 
+import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.AerospikeException;
@@ -53,6 +55,9 @@ public class AerospikeTextRecordReader
 	private boolean isScanRunning = false;
 	private String binName;
 	
+	private LongWritable currentKey;
+	private Text currentValue;
+
 	public class CallBack implements ScanCallback {
 		@Override
 		public void scanCallback(Key key, Record record) throws AerospikeException {
@@ -105,6 +110,11 @@ public class AerospikeTextRecordReader
 	}
 
 	public AerospikeTextRecordReader(AerospikeSplit split)
+		throws IOException {
+		init(split);
+	}
+
+	public void init(AerospikeSplit split)
 		throws IOException {
 		final String node = split.getNode();
 		final String host = split.getHost();
@@ -191,5 +201,63 @@ public class AerospikeTextRecordReader
 			}
 			in = null;
 		}
+	}
+
+	// ---------------- NEW API ----------------
+
+	@Override
+	public void initialize(InputSplit split, TaskAttemptContext context)
+		throws IOException {
+		init((AerospikeSplit) split);
+	}
+
+	@Override
+	public boolean nextKeyValue() throws IOException {
+		// new API call routed to old API
+		if (currentKey == null) {
+			currentKey = createKey();
+		}
+		if (currentValue == null) {
+			currentValue = createValue();
+		}
+
+		// FIXME: does the new API mandate a new instance each time (?)
+		return next(currentKey, currentValue);
+	}
+
+	@Override
+	public LongWritable getCurrentKey() throws IOException {
+		return currentKey;
+	}
+
+	@Override
+	public Text getCurrentValue() {
+		return currentValue;
+	}
+
+	protected LongWritable setCurrentKey(LongWritable oldApiKey,
+																			 LongWritable newApiKey,
+																			 long keyval) {
+
+		if (oldApiKey == null) {
+			oldApiKey = new LongWritable();
+			oldApiKey.set(keyval);
+		}
+
+		// new API might not be used
+		if (newApiKey != null) {
+			newApiKey.set(keyval);
+		}
+		return oldApiKey;
+	}
+
+	protected Text setCurrentValue(Text oldApiValue,
+																 Text newApiKey,
+																 Text val) {
+		if (newApiKey != null) {
+			newApiKey.clear();
+			newApiKey.set(val);
+		}
+		return val;
 	}
 }

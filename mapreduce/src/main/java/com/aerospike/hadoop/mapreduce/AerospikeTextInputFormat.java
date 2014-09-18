@@ -48,8 +48,10 @@ public class AerospikeTextInputFormat
 
 	// ---------------- OLD API ----------------
   
-	public RecordReader<LongWritable, Text> getRecordReader(
-      InputSplit split, JobConf jobconf, Reporter reporter)
+	public org.apache.hadoop.mapred.RecordReader<LongWritable, Text>
+		getRecordReader(org.apache.hadoop.mapred.InputSplit split,
+										JobConf jobconf,
+										Reporter reporter)
 		throws IOException {
 		return new AerospikeTextRecordReader((AerospikeSplit) split);
 	}
