@@ -5,3 +5,5 @@
 * Add scan by secondary index.
 
 * Create OutputFormat.
+
+* Benchmark vs HDFS.

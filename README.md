@@ -15,9 +15,14 @@ Install Hadoop
 Building
 ----------------------------------------------------------------
 
+    cd ~/aerospike/aerospike-hadoop
+
+    # Build the mapreduce input and output connectors.
     ./gradlew :mapreduce:jar
 
+    # Build the example programs.
     ./gradlew :examples:word_count:installApp
+    ./gradlew :examples:int_sum:installApp
 
 
 Setup Target Input Text File
@@ -45,7 +50,7 @@ Setup Sample Data
                     '/tmp/input']"
 
     ./gradlew sampledata:run \
-        -PappArgs="['localhost:3000:test:sample', 'seq-int', '10000']"
+        -PappArgs="['localhost:3000:test:sample:bin1', 'seq-int', '10000']"
 
 
 Running Examples

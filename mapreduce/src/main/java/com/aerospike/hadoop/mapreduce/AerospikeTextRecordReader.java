@@ -29,7 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 
-import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hadoop.mapreduce.RecordReader;
 
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.AerospikeException;
@@ -39,7 +39,8 @@ import com.aerospike.client.Record;
 import com.aerospike.client.ScanCallback;
 
 public class AerospikeTextRecordReader
-	implements RecordReader<LongWritable, Text> {
+	extends RecordReader<LongWritable, Text>
+	implements org.apache.hadoop.mapred.RecordReader<LongWritable, Text> {
 
 	private static final Log log =
 		LogFactory.getLog(AerospikeTextRecordReader.class);
@@ -103,7 +104,7 @@ public class AerospikeTextRecordReader
 		}
 	}
 
-	public AerospikeTextRecordReader(Configuration job, AerospikeSplit split)
+	public AerospikeTextRecordReader(AerospikeSplit split)
 		throws IOException {
 		final String node = split.getNode();
 		final String host = split.getHost();

@@ -22,11 +22,14 @@ import java.io.IOException;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.InputSplit;
+
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobConfigurable;
-import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.JobConfigurable;
+
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 public class AerospikeTextInputFormat
 	extends AerospikeInputFormat<LongWritable, Text>
@@ -34,10 +37,21 @@ public class AerospikeTextInputFormat
 
 	public void configure(JobConf conf) {
 	}
+
+	// ---------------- NEW API ----------------
+
+	public RecordReader<LongWritable, Text> createRecordReader(
+      InputSplit split, TaskAttemptContext context)
+		throws IOException, InterruptedException {
+		return new AerospikeTextRecordReader((AerospikeSplit) split);
+	}
+
+	// ---------------- OLD API ----------------
   
 	public RecordReader<LongWritable, Text> getRecordReader(
-      InputSplit genericSplit, JobConf job, Reporter reporter)
+      InputSplit split, JobConf jobconf, Reporter reporter)
 		throws IOException {
-		return new AerospikeTextRecordReader(job, (AerospikeSplit) genericSplit);
+		return new AerospikeTextRecordReader((AerospikeSplit) split);
 	}
+
 }

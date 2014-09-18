@@ -1,2 +1,4 @@
-include ':sampledata', ':mapreduce'
+include ':mapreduce'
+include ':sampledata'
 include ':examples:word_count'
+include ':examples:int_sum'

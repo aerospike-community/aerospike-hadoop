@@ -19,18 +19,25 @@
 package com.aerospike.hadoop.mapreduce;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.apache.hadoop.conf.Configuration;
+
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.InputFormat;
-import org.apache.hadoop.mapred.InputSplit;
+
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
+
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.AerospikeException;
@@ -41,11 +48,10 @@ import com.aerospike.client.policy.ScanPolicy;
 
 /**
  * An {@link InputFormat} for data stored in an Aerospike database.
- * Records are selected with an integer range.
- * Returns the record key and selected bin content as value.
  */
 public abstract class AerospikeInputFormat<KK, VV>
-	implements InputFormat<KK, VV> {
+	extends InputFormat<KK, VV>
+	implements org.apache.hadoop.mapred.InputFormat<KK, VV> {
 
 	private static final Log log = LogFactory.getLog(AerospikeInputFormat.class);
 
@@ -55,21 +61,35 @@ public abstract class AerospikeInputFormat<KK, VV>
 	private static String setName = null;
 	private static String binName = null;
 
-	public static void setInputPaths(String h, int p,
-																	 String ns, String sn, String bn) {
-		log.info(String.format("setInputPaths: %s %d %s %s %s", h, p, ns, sn, bn));
-		host = h;
-		port = p;
-		namespace = ns;
-		setName = sn;
-		binName = bn;
+	// Handles column spec strings like: "localhost:3000:test:sample:bin1"
+	//
+	public static void setInputPaths(String colspec) {
+		String[] inparam = colspec.split(":");
+		host = inparam[0];
+		port = Integer.parseInt(inparam[1]);
+		namespace = inparam[2];
+		setName = inparam[3];
+		binName = inparam[4];
+		log.info(String.format("setting: %s %d %s %s %s",
+													 host, port, namespace, setName, binName));
 	}
 
-	public abstract RecordReader<KK, VV> getRecordReader(
-      InputSplit split, JobConf job, Reporter reporter)
-		throws IOException;
+	// ---------------- NEW API ----------------
 
-	public InputSplit[] getSplits(JobConf job, int numSplits)
+	public List<InputSplit> getSplits(JobContext context) throws IOException {
+		// Delegate to the old API.
+		Configuration cfg = context.getConfiguration();
+		JobConf jobconf = (cfg instanceof JobConf ? (JobConf) cfg : new JobConf(cfg));
+		return Arrays.asList((InputSplit[]) getSplits(jobconf, jobconf.getNumMapTasks()));
+	}
+
+	public abstract RecordReader<KK, VV> createRecordReader(
+      InputSplit split, TaskAttemptContext context)
+		throws IOException, InterruptedException;
+
+	// ---------------- OLD API ----------------
+
+	public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf job, int numSplits)
 		throws IOException {
 		try {
 			log.info(String.format("using: %s %d %s %s %s",
@@ -101,4 +121,9 @@ public abstract class AerospikeInputFormat<KK, VV>
 			throw new IOException("exception in getSplits", ex);
 		}
 	}
+
+	public abstract org.apache.hadoop.mapred.RecordReader<KK, VV> getRecordReader(
+      org.apache.hadoop.mapred.InputSplit split, JobConf job, Reporter reporter)
+		throws IOException;
+
 }

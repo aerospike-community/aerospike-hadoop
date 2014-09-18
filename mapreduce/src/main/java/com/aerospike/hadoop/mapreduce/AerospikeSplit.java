@@ -24,11 +24,11 @@ import java.io.IOException;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.InputSplit;
+import org.apache.hadoop.mapreduce.InputSplit;
 
 public class AerospikeSplit
-	extends org.apache.hadoop.mapreduce.InputSplit
-	implements InputSplit {
+	extends InputSplit
+	implements org.apache.hadoop.mapred.InputSplit {
 
 	private String node;
 	private String host;

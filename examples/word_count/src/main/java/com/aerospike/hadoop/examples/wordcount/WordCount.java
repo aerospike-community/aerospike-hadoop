@@ -96,13 +96,7 @@ public class WordCount {
 		conf.setInputFormat(AerospikeTextInputFormat.class);
 		conf.setOutputFormat(TextOutputFormat.class);
 
-		String[] inparam = args[0].split(":");
-		String host = inparam[0];
-		int port = Integer.parseInt(inparam[1]);
-		String namespace = inparam[2];
-		String setName = inparam[3];
-		String binName = inparam[4];
-		AerospikeInputFormat.setInputPaths(host, port, namespace, setName, binName);
+		AerospikeInputFormat.setInputPaths(args[0]);
 		
 		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
 
