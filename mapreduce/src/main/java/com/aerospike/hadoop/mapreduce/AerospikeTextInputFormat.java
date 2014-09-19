@@ -38,6 +38,35 @@ public class AerospikeTextInputFormat
 	public void configure(JobConf conf) {
 	}
 
+	protected static class AerospikeTextRecordReader
+		extends AerospikeRecordReader<Text> {
+
+		public AerospikeTextRecordReader(AerospikeSplit split) throws IOException {
+			super(split);
+		}
+
+		@Override
+		public Text createValue() {
+			return new Text();
+		}
+
+		@Override
+		protected Text setCurrentValue(Text oldApiValue,
+																	 Text newApiValue,
+																	 Object object) {
+			String val = object.toString();
+			if (oldApiValue == null) {
+				oldApiValue = new Text();
+				oldApiValue.set(val);
+			}
+
+			if (newApiValue != null) {
+				newApiValue.set(val);
+			}
+			return oldApiValue;
+		}
+	}
+
 	// ---------------- NEW API ----------------
 
 	public RecordReader<LongWritable, Text> createRecordReader(

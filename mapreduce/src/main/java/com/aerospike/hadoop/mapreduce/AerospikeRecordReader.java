@@ -40,12 +40,11 @@ import com.aerospike.client.policy.ScanPolicy;
 import com.aerospike.client.Record;
 import com.aerospike.client.ScanCallback;
 
-public class AerospikeTextRecordReader
-	extends RecordReader<LongWritable, Text>
-	implements org.apache.hadoop.mapred.RecordReader<LongWritable, Text> {
+public abstract class AerospikeRecordReader<VV>
+	extends RecordReader<LongWritable, VV>
+	implements org.apache.hadoop.mapred.RecordReader<LongWritable, VV> {
 
-	private static final Log log =
-		LogFactory.getLog(AerospikeTextRecordReader.class);
+	private static final Log log = LogFactory.getLog(AerospikeRecordReader.class);
 
 	private ASSCanReader in;
 
@@ -56,7 +55,7 @@ public class AerospikeTextRecordReader
 	private String binName;
 	
 	private LongWritable currentKey;
-	private Text currentValue;
+	private VV currentValue;
 
 	public class CallBack implements ScanCallback {
 		@Override
@@ -109,7 +108,7 @@ public class AerospikeTextRecordReader
 		}
 	}
 
-	public AerospikeTextRecordReader(AerospikeSplit split)
+	public AerospikeRecordReader(AerospikeSplit split)
 		throws IOException {
 		init(split);
 	}
@@ -131,11 +130,31 @@ public class AerospikeTextRecordReader
 		return new LongWritable();
 	}
 
-	public Text createValue() {
-		return new Text();
+	// Must be provided by derived class ...
+	public abstract VV createValue();
+
+	protected LongWritable setCurrentKey(LongWritable oldApiKey,
+																			 LongWritable newApiKey,
+																			 long keyval) {
+
+		if (oldApiKey == null) {
+			oldApiKey = new LongWritable();
+			oldApiKey.set(keyval);
+		}
+
+		// new API might not be used
+		if (newApiKey != null) {
+			newApiKey.set(keyval);
+		}
+		return oldApiKey;
 	}
 
-	public synchronized boolean next(LongWritable key, Text value)
+	// Must be provided by derived class ...
+	protected abstract VV setCurrentValue(VV oldApiValue,
+																				VV newApiValue,
+																				Object object);
+
+	public synchronized boolean next(LongWritable key, VV value)
 		throws IOException {
 		final int waitMSec = 1000;
 		int trials = 5;
@@ -167,14 +186,16 @@ public class AerospikeTextRecordReader
 				}
 				
 			}
-			
-			key.set(1);
-			String val = (String) rec.bins.get(binName);
-			value.set(val);
-			// log.info("next: " + val);
+
+			long nextkey = 1;
+			Object nextval = rec.bins.get(binName);
+
+			currentKey = setCurrentKey(currentKey, key, nextkey);
+			currentValue = setCurrentValue(currentValue, value, nextval);
+
 		}
 		catch (Exception ex) {
-			throw new IOException("exception in AerospikeTextRecordReader.next", ex);
+			throw new IOException("exception in AerospikeRecordReader.next", ex);
 		}
 		return true;
 	}
@@ -196,7 +217,7 @@ public class AerospikeTextRecordReader
 				in.join();
 			}
 			catch (Exception ex) {
-				throw new IOException("exception in AerospikeTextRecordReader.close",
+				throw new IOException("exception in AerospikeRecordReader.close",
 															ex);
 			}
 			in = null;
@@ -231,33 +252,7 @@ public class AerospikeTextRecordReader
 	}
 
 	@Override
-	public Text getCurrentValue() {
+	public VV getCurrentValue() {
 		return currentValue;
-	}
-
-	protected LongWritable setCurrentKey(LongWritable oldApiKey,
-																			 LongWritable newApiKey,
-																			 long keyval) {
-
-		if (oldApiKey == null) {
-			oldApiKey = new LongWritable();
-			oldApiKey.set(keyval);
-		}
-
-		// new API might not be used
-		if (newApiKey != null) {
-			newApiKey.set(keyval);
-		}
-		return oldApiKey;
-	}
-
-	protected Text setCurrentValue(Text oldApiValue,
-																 Text newApiKey,
-																 Text val) {
-		if (newApiKey != null) {
-			newApiKey.clear();
-			newApiKey.set(val);
-		}
-		return val;
 	}
 }
