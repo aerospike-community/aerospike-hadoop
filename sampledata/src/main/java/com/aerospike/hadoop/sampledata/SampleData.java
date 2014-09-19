@@ -106,12 +106,12 @@ public class SampleData {
 		task.waitTillComplete();
 		log.info("created secondary index on " + bin1name);
 
-		for (int ii = 0; ii < nrecs; ++ii) {
+		for (long ll = 0; ll < nrecs; ++ll) {
 
-			String keystr = "key-" + ii;
+			String keystr = "key-" + ll;
 
 			Key key = new Key(namespace, setName, keystr);
-			Bin bin1 = new Bin(bin1name, ii);
+			Bin bin1 = new Bin(bin1name, ll);
 			Bin bin2 = new Bin("bin2", "value2");
 
 			client.put(writePolicy, key, bin1, bin2);

@@ -21,7 +21,6 @@ package com.aerospike.hadoop.mapreduce;
 import java.io.IOException;
 
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Reporter;
@@ -31,37 +30,38 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-public class AerospikeTextInputFormat
-	extends AerospikeInputFormat<LongWritable, Text>
+public class AerospikeLongInputFormat
+	extends AerospikeInputFormat<LongWritable, LongWritable>
 	implements JobConfigurable {
 
 	public void configure(JobConf conf) {
 	}
 
-	protected static class AerospikeTextRecordReader
-		extends AerospikeRecordReader<Text> {
+	protected static class AerospikeLongRecordReader
+		extends AerospikeRecordReader<LongWritable> {
 
-		public AerospikeTextRecordReader() throws IOException {
+		public AerospikeLongRecordReader() throws IOException {
 			super();
 		}
 
-		public AerospikeTextRecordReader(AerospikeSplit split) throws IOException {
+		public AerospikeLongRecordReader(AerospikeSplit split) throws IOException {
 			super(split);
 		}
 
 		@Override
-		public Text createValue() {
-			return new Text();
+		public LongWritable createValue() {
+			return new LongWritable();
 		}
 
 		@Override
-		protected Text setCurrentValue(Text oldApiValue,
-																	 Text newApiValue,
-																	 Object object) {
-			String val = object.toString();
+		protected LongWritable setCurrentValue(LongWritable oldApiValue,
+																					 LongWritable newApiValue,
+																					 Object object) {
+
+			Long val = new Long((Integer) object);
 
 			if (oldApiValue == null) {
-				oldApiValue = new Text();
+				oldApiValue = new LongWritable();
 				oldApiValue.set(val);
 			}
 
@@ -74,20 +74,20 @@ public class AerospikeTextInputFormat
 
 	// ---------------- NEW API ----------------
 
-	public RecordReader<LongWritable, Text> createRecordReader(
+	public RecordReader<LongWritable, LongWritable> createRecordReader(
       InputSplit split, TaskAttemptContext context)
 		throws IOException, InterruptedException {
-		return new AerospikeTextRecordReader();
+		return new AerospikeLongRecordReader();
 	}
 
 	// ---------------- OLD API ----------------
   
-	public org.apache.hadoop.mapred.RecordReader<LongWritable, Text>
+	public org.apache.hadoop.mapred.RecordReader<LongWritable, LongWritable>
 		getRecordReader(org.apache.hadoop.mapred.InputSplit split,
 										JobConf jobconf,
 										Reporter reporter)
 		throws IOException {
-		return new AerospikeTextRecordReader((AerospikeSplit) split);
+		return new AerospikeLongRecordReader((AerospikeSplit) split);
 	}
 
 }

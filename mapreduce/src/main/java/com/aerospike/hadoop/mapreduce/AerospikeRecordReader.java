@@ -108,8 +108,14 @@ public abstract class AerospikeRecordReader<VV>
 		}
 	}
 
+	public AerospikeRecordReader()
+		throws IOException {
+		log.info("NEW CTOR");
+	}
+
 	public AerospikeRecordReader(AerospikeSplit split)
 		throws IOException {
+		log.info("OLD CTOR");
 		init(split);
 	}
 
@@ -229,6 +235,7 @@ public abstract class AerospikeRecordReader<VV>
 	@Override
 	public void initialize(InputSplit split, TaskAttemptContext context)
 		throws IOException {
+		log.info("INITIALIZE");
 		init((AerospikeSplit) split);
 	}
 

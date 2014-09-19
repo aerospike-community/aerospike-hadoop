@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.LongWritable;
 
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -36,39 +36,37 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import org.apache.hadoop.util.GenericOptionsParser;
 
-import com.aerospike.hadoop.mapreduce.AerospikeTextInputFormat;
+import com.aerospike.hadoop.mapreduce.AerospikeLongInputFormat;
 
 public class IntSum {
 
 	private static final Log log = LogFactory.getLog(IntSum.class);
 
   public static class TokenizerMapper 
-       extends Mapper<Object, Text, Text, IntWritable>{
+       extends Mapper<Object, LongWritable, IntWritable, LongWritable> {
     
     private final static IntWritable one = new IntWritable(1);
-    private Text word = new Text();
+		private LongWritable val = new LongWritable();
       
-    public void map(Object key, Text value, Context context
-                    ) throws IOException, InterruptedException {
-      StringTokenizer itr = new StringTokenizer(value.toString());
-      while (itr.hasMoreTokens()) {
-        word.set(itr.nextToken());
-        context.write(word, one);
-      }
+    public void map(Object key, LongWritable value, Context context)
+			throws IOException, InterruptedException {
+			val.set(value.get());
+			context.write(one, val);
     }
   }
   
   public static class IntSumReducer 
-       extends Reducer<Text,IntWritable,Text,IntWritable> {
-    private IntWritable result = new IntWritable();
+       extends Reducer<IntWritable,LongWritable,IntWritable,LongWritable> {
 
-    public void reduce(Text key, Iterable<IntWritable> values, 
+    private LongWritable result = new LongWritable();
+
+    public void reduce(IntWritable key, Iterable<LongWritable> values, 
                        Context context
                        ) throws IOException, InterruptedException {
-      int sum = 0;
-      for (IntWritable val : values) {
-        sum += val.get();
-      }
+			long sum = 0;
+			for (LongWritable val : values) {
+				sum += val.get();
+			}
       result.set(sum);
       context.write(key, result);
     }
@@ -88,14 +86,14 @@ public class IntSum {
     @SuppressWarnings("deprecation")
     Job job = new Job(conf, "AerospikeIntSum");
     job.setJarByClass(IntSum.class);
-    job.setInputFormatClass(AerospikeTextInputFormat.class);
+    job.setInputFormatClass(AerospikeLongInputFormat.class);
     job.setMapperClass(TokenizerMapper.class);
     job.setCombinerClass(IntSumReducer.class);
     job.setReducerClass(IntSumReducer.class);
-    job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(IntWritable.class);
+    job.setOutputKeyClass(IntWritable.class);
+    job.setOutputValueClass(LongWritable.class);
 
-		AerospikeTextInputFormat.addInputSpec(job, otherArgs[0]);
+		AerospikeLongInputFormat.addInputSpec(job, otherArgs[0]);
 
     FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 

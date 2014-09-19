@@ -46,13 +46,13 @@ Setup Sample Data
 
     # Loads a text file for word_count demo.
     ./gradlew sampledata:run \
-        -PappArgs="['localhost:3000:test:sample:bin1', \
+        -PappArgs="['localhost:3000:test:words:bin1', \
                     'text-file', \
                     '/tmp/input']"
 
     # Generates sequential integers for int_sum demo.
     ./gradlew sampledata:run \
-        -PappArgs="['localhost:3000:test:sample:bin1', \
+        -PappArgs="['localhost:3000:test:integers:bin1', \
                     'seq-int', \
                     '10000']"
 
@@ -83,7 +83,7 @@ Running Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/word_count/build/libs/word_count.jar \
-        localhost:3000:test:sample:bin1 \
+        localhost:3000:test:words:bin1 \
         /tmp/output
 
     # -- OR --
@@ -93,7 +93,7 @@ Running Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/int_sum/build/libs/int_sum.jar \
-        localhost:3000:test:sample:bin1 \
+        localhost:3000:test:integers:bin1 \
         /tmp/output
 
     # Inspect the results.
