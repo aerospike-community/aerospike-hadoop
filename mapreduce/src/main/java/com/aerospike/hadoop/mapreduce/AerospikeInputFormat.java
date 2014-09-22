@@ -56,11 +56,14 @@ public abstract class AerospikeInputFormat<KK, VV>
 
 	private static final Log log = LogFactory.getLog(AerospikeInputFormat.class);
 
+	private static String type = null;
 	private static String host = "127.0.0.1";
 	private static int port = 3000;
 	private static String namespace = "test";
 	private static String setName = null;
 	private static String binName = null;
+	private static long numrangeBegin = 0;
+	private static long numrangeEnd = 0;
 
 	public static String INPUT_SPEC = "aerospike.input.spec";
 
@@ -68,11 +71,18 @@ public abstract class AerospikeInputFormat<KK, VV>
 	//
 	public static void parse_spec(String colspec) {
 		String[] inparam = colspec.split(":");
-		host = inparam[0];
-		port = Integer.parseInt(inparam[1]);
-		namespace = inparam[2];
-		setName = inparam[3];
-		binName = inparam[4];
+		int argi = 0;
+		type = inparam[argi++];
+		host = inparam[argi++];
+		port = Integer.parseInt(inparam[argi++]);
+		namespace = inparam[argi++];
+		setName = inparam[argi++];
+		binName = inparam[argi++];
+		if (type.equals("numrange")) {
+			numrangeBegin = Long.parseLong(inparam[argi++]);
+			numrangeEnd = Long.parseLong(inparam[argi++]);
+		}
+
 		log.info(String.format("parse_spec: %s %d %s %s %s",
 													 host, port, namespace, setName, binName));
 	}
@@ -87,7 +97,8 @@ public abstract class AerospikeInputFormat<KK, VV>
 		// Delegate to the old API.
 		Configuration cfg = context.getConfiguration();
 		JobConf jobconf = (cfg instanceof JobConf ? (JobConf) cfg : new JobConf(cfg));
-		return Arrays.asList((InputSplit[]) getSplits(jobconf, jobconf.getNumMapTasks()));
+		return Arrays.asList((InputSplit[])
+												 getSplits(jobconf, jobconf.getNumMapTasks()));
 	}
 
 	public abstract RecordReader<KK, VV> createRecordReader(
@@ -118,8 +129,10 @@ public abstract class AerospikeInputFormat<KK, VV>
 					Node node = nodes[ii];
 					String nodeName = node.getName();
 					Host nodehost = node.getHost();
-					splits[ii] = new AerospikeSplit(nodeName, nodehost.name, nodehost.port,
-																					namespace, setName, binName);
+					splits[ii] = new AerospikeSplit(type, nodeName,
+																					nodehost.name, nodehost.port,
+																					namespace, setName, binName,
+																					numrangeBegin, numrangeEnd);
 					log.info("split: " + node);
 				}
 				return splits;

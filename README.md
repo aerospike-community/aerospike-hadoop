@@ -9,6 +9,8 @@ Install Hadoop
     tar xvfz /usr/local/dist/hadoop-${HADOOPVER}.tar.gz
     ln -s hadoop-${HADOOPVER} hadoop
     
+    # Add default FS in /usr/local/hadoop/etc/hadoop/core-site.xml
+
     export HADOOP_PREFIX=/usr/local/hadoop
 
 
@@ -83,7 +85,7 @@ Running Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/word_count/build/libs/word_count.jar \
-        localhost:3000:test:words:bin1 \
+        scan:localhost:3000:test:words:bin1 \
         /tmp/output
 
     # -- OR --
@@ -93,7 +95,17 @@ Running Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/int_sum/build/libs/int_sum.jar \
-        localhost:3000:test:integers:bin1 \
+        scan:localhost:3000:test:integers:bin1 \
+        /tmp/output
+
+    # -- OR --
+
+    # Run the int_sum range example (New Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/int_sum/build/libs/int_sum.jar \
+        numrange:localhost:3000:test:integers:bin1:100:200 \
         /tmp/output
 
     # Inspect the results.

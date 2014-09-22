@@ -30,24 +30,35 @@ public class AerospikeSplit
 	extends InputSplit
 	implements org.apache.hadoop.mapred.InputSplit {
 
+	private String type;
 	private String node;
 	private String host;
 	private int port;
 	private String namespace;
 	private String setName;
 	private String binName;
+	private long numrangeBegin;
+	private long numrangeEnd;
 
 	AerospikeSplit() {
 	}
 
-	public AerospikeSplit(String node, String host, int port,
-												String ns, String setName, String binName) {
+	public AerospikeSplit(String type, String node, String host, int port,
+												String ns, String setName, String binName,
+												long numrangeBegin, long numrangeEnd) {
+		this.type = type;
 		this.node = node;
 		this.host = host;
 		this.port = port;
 		this.namespace = ns;
 		this.setName = setName;
 		this.binName = binName;
+		this.numrangeBegin = numrangeBegin;
+		this.numrangeEnd = numrangeEnd;
+	}
+
+	public String getType() {
+		return type;
 	}
 
 	public String getNode() {
@@ -74,31 +85,46 @@ public class AerospikeSplit
 		return binName;
 	}
 
+	public long getNumRangeBegin() {
+		return numrangeBegin;
+	}
+
+	public long getNumRangeEnd() {
+		return numrangeEnd;
+	}
+
 	public long getLength() {
 		return 1;
 	}
 
 	public String toString() {
-		return "node:" + node + ", host:" + host + ", port:" + port + ", ns:"
-			+ namespace + ", setName:" + setName + ", binName:" + binName;
+		return "type:" + type + "node:" + node + ", host:" + host
+			+ ", port:" + port + ", ns:" + namespace
+			+ ", setName:" + setName + ", binName:" + binName;
 	}
 
 	public void write(DataOutput out) throws IOException {
+		Text.writeString(out, type);
 		Text.writeString(out, node);
 		Text.writeString(out, host);
 		out.writeInt(port);
 		Text.writeString(out, namespace);
 		Text.writeString(out, setName);
 		Text.writeString(out, binName);
+		out.writeLong(numrangeBegin);
+		out.writeLong(numrangeEnd);
 	}
 
 	public void readFields(DataInput in) throws IOException {
+		type = new String(Text.readString(in));
 		node = new String(Text.readString(in));
 		host = new String(Text.readString(in));
 		port = in.readInt();
 		namespace = new String(Text.readString(in));
 		setName = new String(Text.readString(in));
 		binName = new String(Text.readString(in));
+		numrangeBegin = in.readLong();
+		numrangeEnd = in.readLong();
 	}
 
 	public String[] getLocations() throws IOException {

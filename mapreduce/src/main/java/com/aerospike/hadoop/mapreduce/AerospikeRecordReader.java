@@ -36,7 +36,12 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.AerospikeException;
 import com.aerospike.client.Key;
+import com.aerospike.client.policy.QueryPolicy;
 import com.aerospike.client.policy.ScanPolicy;
+import com.aerospike.client.query.Filter;
+import com.aerospike.client.query.RecordSet;
+import com.aerospike.client.query.ResultSet;
+import com.aerospike.client.query.Statement;
 import com.aerospike.client.Record;
 import com.aerospike.client.ScanCallback;
 
@@ -46,13 +51,16 @@ public abstract class AerospikeRecordReader<VV>
 
 	private static final Log log = LogFactory.getLog(AerospikeRecordReader.class);
 
-	private ASSCanReader in;
+	private ASSCanReader scanReader = null;
+	private ASQueryReader queryReader = null;
 
 	private LinkedBlockingQueue<Record> queue = new LinkedBlockingQueue<Record>();
-	private boolean isScanFinished = false;
+	private boolean isFinished = false;
 	private boolean isError = false;
-	private boolean isScanRunning = false;
+	private boolean isRunning = false;
 	private String binName;
+	private long numrangeBegin;
+	private long numrangeEnd;
 	
 	private LongWritable currentKey;
 	private VV currentValue;
@@ -92,10 +100,73 @@ public abstract class AerospikeRecordReader<VV>
 					ScanPolicy scanPolicy = new ScanPolicy();
 					CallBack cb = new CallBack();
 					log.info("scan starting");
-					isScanRunning = true;
+					isRunning = true;
 					client.scanNode(scanPolicy, node, namespace, setName, cb);
-					isScanFinished = true;
+					isFinished = true;
 					log.info("scan finished");
+				}
+				finally {
+					client.close();
+				}
+			}
+			catch (Exception ex) {
+				isError = true;
+				return;
+			}
+		}
+	}
+
+	public class ASQueryReader extends java.lang.Thread {
+
+		String node;
+		String host;
+		int port;
+		String namespace;
+		String setName;
+		String binName;
+		long numrangeBegin;
+		long numrangeEnd;
+
+		ASQueryReader(String node, String host, int port,
+						String ns, String setName, String binName,
+						long numrangeBegin, long numrangeEnd) {
+			this.node = node;
+			this.host = host;
+			this.port = port;
+			this.namespace = ns;
+			this.setName = setName;
+			this.binName = binName;
+			this.numrangeBegin = numrangeBegin;
+			this.numrangeEnd = numrangeEnd;
+		}
+
+		public void run() {
+			try {
+				AerospikeClient client = new AerospikeClient(host, port);
+				try {
+					Statement stmt = new Statement();
+					stmt.setNamespace(namespace);
+					stmt.setSetName(setName);
+					stmt.setFilters(Filter.range(binName, numrangeBegin, numrangeEnd));
+					log.info(String.format("range %s %d %d",
+																 binName, numrangeBegin, numrangeEnd));
+					stmt.setBinNames(binName);
+					QueryPolicy queryPolicy = new QueryPolicy();
+					RecordSet rs = client.query(queryPolicy, stmt);
+					isRunning = true;
+					try {
+						log.info("query starting");
+						while (rs.next()) {
+							Key key = rs.getKey();
+							Record record = rs.getRecord();
+							queue.put(record);
+						}
+					}
+					finally {
+						rs.close();
+						isFinished = true;
+						log.info("query finished");
+					}
 				}
 				finally {
 					client.close();
@@ -121,14 +192,25 @@ public abstract class AerospikeRecordReader<VV>
 
 	public void init(AerospikeSplit split)
 		throws IOException {
+		final String type = split.getType();
 		final String node = split.getNode();
 		final String host = split.getHost();
 		final int port = split.getPort();
 		final String namespace = split.getNameSpace();
 		final String setName = split.getSetName();
 		this.binName = split.getBinName();
-		in = new ASSCanReader(node, host, port, namespace, setName);
-		in.start();
+		this.numrangeBegin = split.getNumRangeBegin();
+		this.numrangeEnd = split.getNumRangeEnd();
+
+		if (type.equals("scan")) {
+			scanReader = new ASSCanReader(node, host, port, namespace, setName);
+			scanReader.start();
+		} else if (type.equals("numrange")) {
+			queryReader = new ASQueryReader(node, host, port, namespace, setName,
+																			binName, numrangeBegin, numrangeEnd);
+			queryReader.start();
+		}
+
 		log.info("node: " + node);
 	}
 
@@ -162,6 +244,7 @@ public abstract class AerospikeRecordReader<VV>
 
 	public synchronized boolean next(LongWritable key, VV value)
 		throws IOException {
+
 		final int waitMSec = 1000;
 		int trials = 5;
 
@@ -171,12 +254,12 @@ public abstract class AerospikeRecordReader<VV>
 				if (isError)
 					return false;
 				
-				if (!isScanRunning) {
+				if (!isRunning) {
 					Thread.sleep(100);
 					continue;
 				}
 			
-				if (!isScanFinished && queue.size() == 0) {
+				if (!isFinished && queue.size() == 0) {
 					if (trials == 0) {
 						log.error("SCAN TIMEOUT");
 						return false;
@@ -184,13 +267,12 @@ public abstract class AerospikeRecordReader<VV>
 					log.info("queue empty: waiting...");
 					Thread.sleep(waitMSec);
 					trials--;
-				} else if (isScanFinished && queue.size() == 0) {
+				} else if (isFinished && queue.size() == 0) {
 					return false;
 				} else if (queue.size() != 0) {
 					rec = queue.take();
 					break;
 				}
-				
 			}
 
 			long nextkey = 1;
@@ -207,7 +289,7 @@ public abstract class AerospikeRecordReader<VV>
 	}
 
 	public float getProgress() {
-		if (isScanFinished)
+		if (isFinished)
 			return 1.0f;
 		else
 			return 0.0f;
@@ -218,15 +300,25 @@ public abstract class AerospikeRecordReader<VV>
 	}
 
 	public synchronized void close() throws IOException {
-		if (in != null) {
+		if (scanReader != null) {
 			try {
-				in.join();
+				scanReader.join();
 			}
 			catch (Exception ex) {
 				throw new IOException("exception in AerospikeRecordReader.close",
 															ex);
 			}
-			in = null;
+			scanReader = null;
+		}
+		if (queryReader != null) {
+			try {
+				queryReader.join();
+			}
+			catch (Exception ex) {
+				throw new IOException("exception in AerospikeRecordReader.close",
+															ex);
+			}
+			queryReader = null;
 		}
 	}
 

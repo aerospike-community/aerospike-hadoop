@@ -43,6 +43,7 @@ public class SampleData {
 	private static int port;
 	private static String namespace;
 	private static String setName;
+	private static String binName;
 	private static AerospikeClient client;
 	private static WritePolicy writePolicy;
 
@@ -59,6 +60,7 @@ public class SampleData {
 		port = Integer.parseInt(inparam[1]);
 		namespace = inparam[2];
 		setName = inparam[3];
+		binName = inparam[4];
 
 		ClientPolicy policy = new ClientPolicy();
 		policy.user = "";
@@ -81,13 +83,12 @@ public class SampleData {
 	public static void runTextFile(String[] args, int argi) throws Exception {
 
 		String path = args[argi++];
-		String bin1name = "bin1";
 		int nrecs = 0;
 		BufferedReader br = new BufferedReader(new FileReader(path));
 		for (String line; (line = br.readLine()) != null; ) {
 			Key key = new Key(namespace, setName, nrecs++);
-			Bin bin1 = new Bin(bin1name, line);
-			client.put(writePolicy, key, bin1);
+			Bin bin = new Bin(binName, line);
+			client.put(writePolicy, key, bin);
 		}
 		log.info("inserted " + nrecs + " records");
 	}
@@ -96,22 +97,21 @@ public class SampleData {
 
 		int nrecs = Integer.parseInt(args[argi++]);
 
-		String bin1name = "bin1";
-		String ndxname = "bin1ndx";
+		String ndxname = binName + "ndx";
         
 		IndexTask task =
 			client.createIndex(null, namespace, setName,
-												 ndxname, bin1name, IndexType.NUMERIC);
+												 ndxname, binName, IndexType.NUMERIC);
 
 		task.waitTillComplete();
-		log.info("created secondary index on " + bin1name);
+		log.info("created secondary index on " + binName);
 
 		for (long ll = 0; ll < nrecs; ++ll) {
 
 			String keystr = "key-" + ll;
 
 			Key key = new Key(namespace, setName, keystr);
-			Bin bin1 = new Bin(bin1name, ll);
+			Bin bin1 = new Bin(binName, ll);
 			Bin bin2 = new Bin("bin2", "value2");
 
 			client.put(writePolicy, key, bin1, bin2);
