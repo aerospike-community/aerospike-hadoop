@@ -46,6 +46,8 @@ Start Aerospike
 Setup Sample Data
 ----------------------------------------------------------------
 
+    cd ~/aerospike/aerospike-hadoop
+
     # Loads a text file for word_count demo.
     ./gradlew sampledata:run \
         -PappArgs="['localhost:3000:test:words:bin1', \

@@ -65,8 +65,6 @@ public abstract class AerospikeInputFormat<KK, VV>
 	private static long numrangeBegin = 0;
 	private static long numrangeEnd = 0;
 
-	public static String INPUT_SPEC = "aerospike.input.spec";
-
 	// Handles column spec strings like: "localhost:3000:test:sample:bin1"
 	//
 	public static void parse_spec(String colspec) {
