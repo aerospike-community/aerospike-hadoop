@@ -56,6 +56,7 @@ public class AerospikeRecordWriter
 	}
 
 	protected void init() throws IOException {
+		log.info("init");
 	}
 
 	@Override
@@ -70,9 +71,7 @@ public class AerospikeRecordWriter
 	}
 
 	protected void doClose(Progressable progressable) {
-		if (log.isTraceEnabled()) {
-			log.trace(String.format("Closing RecordWriter"));
-		}
+		log.info("doClose");
 		initialized = false;
 	}
 }
