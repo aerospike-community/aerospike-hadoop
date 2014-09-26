@@ -56,49 +56,14 @@ public abstract class AerospikeInputFormat<KK, VV>
 
 	private static final Log log = LogFactory.getLog(AerospikeInputFormat.class);
 
-	private static String type = null;
-	private static String host = "127.0.0.1";
-	private static int port = 3000;
-	private static String namespace = "test";
-	private static String setName = null;
-	private static String binName = null;
-	private static long numrangeBegin = 0;
-	private static long numrangeEnd = 0;
-
-	public static String INPUT_SPEC = "aerospike.input.spec";
-
-	// Handles column spec strings like: "localhost:3000:test:sample:bin1"
-	//
-	public static void parse_spec(String colspec) {
-		String[] inparam = colspec.split(":");
-		int argi = 0;
-		type = inparam[argi++];
-		host = inparam[argi++];
-		port = Integer.parseInt(inparam[argi++]);
-		namespace = inparam[argi++];
-		setName = inparam[argi++];
-		binName = inparam[argi++];
-		if (type.equals("numrange")) {
-			numrangeBegin = Long.parseLong(inparam[argi++]);
-			numrangeEnd = Long.parseLong(inparam[argi++]);
-		}
-
-		log.info(String.format("parse_spec: %s %d %s %s %s",
-													 host, port, namespace, setName, binName));
-	}
 
 	// ---------------- NEW API ----------------
-
-  public static void addInputSpec(Job job, String spec) {
-		parse_spec(spec);
-  }
 
 	public List<InputSplit> getSplits(JobContext context) throws IOException {
 		// Delegate to the old API.
 		Configuration cfg = context.getConfiguration();
 		JobConf jobconf = (cfg instanceof JobConf ? (JobConf) cfg : new JobConf(cfg));
-		return Arrays.asList((InputSplit[])
-												 getSplits(jobconf, jobconf.getNumMapTasks()));
+		return Arrays.asList((InputSplit[]) getSplits(jobconf, jobconf.getNumMapTasks()));
 	}
 
 	public abstract RecordReader<KK, VV> createRecordReader(
@@ -107,13 +72,23 @@ public abstract class AerospikeInputFormat<KK, VV>
 
 	// ---------------- OLD API ----------------
 
-	public static void setInputPaths(String colspec) {
-		parse_spec(colspec);
-	}
-
 	public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf job, int numSplits)
 		throws IOException {
 		try {
+
+			String oper = AerospikeConfigUtil.getInputOperation(job);
+			String host = AerospikeConfigUtil.getInputHost(job);
+			int port = AerospikeConfigUtil.getInputPort(job);
+			String namespace = AerospikeConfigUtil.getInputNamespace(job);
+			String setName = AerospikeConfigUtil.getInputSetName(job);
+			String binName = AerospikeConfigUtil.getInputBinName(job);
+			long numrangeBegin = 0;
+			long numrangeEnd = 0;
+			if (oper.equals("numrange")) {
+				numrangeBegin = AerospikeConfigUtil.getInputNumRangeBegin(job);
+				numrangeEnd = AerospikeConfigUtil.getInputNumRangeEnd(job);
+			}
+			
 			log.info(String.format("using: %s %d %s %s %s",
 														 host, port, namespace, setName, binName));
 			AerospikeClient client = new AerospikeClient(host, port);
@@ -129,7 +104,7 @@ public abstract class AerospikeInputFormat<KK, VV>
 					Node node = nodes[ii];
 					String nodeName = node.getName();
 					Host nodehost = node.getHost();
-					splits[ii] = new AerospikeSplit(type, nodeName,
+					splits[ii] = new AerospikeSplit(oper, nodeName,
 																					nodehost.name, nodehost.port,
 																					namespace, setName, binName,
 																					numrangeBegin, numrangeEnd);

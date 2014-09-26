@@ -46,6 +46,8 @@ Start Aerospike
 Setup Sample Data
 ----------------------------------------------------------------
 
+    cd ~/aerospike/aerospike-hadoop
+
     # Loads a text file for word_count demo.
     ./gradlew sampledata:run \
         -PappArgs="['localhost:3000:test:words:bin1', \
@@ -85,7 +87,10 @@ Running Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/word_count/build/libs/word_count.jar \
-        scan:localhost:3000:test:words:bin1 \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=words \
+        -D aerospike.input.binname=bin1 \
+        -D aerospike.input.operation=scan \
         /tmp/output
 
     # -- OR --
@@ -95,7 +100,10 @@ Running Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/int_sum/build/libs/int_sum.jar \
-        scan:localhost:3000:test:integers:bin1 \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=integers \
+        -D aerospike.input.binname=bin1 \
+        -D aerospike.input.operation=scan \
         /tmp/output
 
     # -- OR --
@@ -105,7 +113,12 @@ Running Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/int_sum/build/libs/int_sum.jar \
-        numrange:localhost:3000:test:integers:bin1:100:200 \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=integers \
+        -D aerospike.input.binname=bin1 \
+        -D aerospike.input.operation=numrange \
+        -D aerospike.input.numrange.begin=100 \
+        -D aerospike.input.numrange.end=200 \
         /tmp/output
 
     # Inspect the results.

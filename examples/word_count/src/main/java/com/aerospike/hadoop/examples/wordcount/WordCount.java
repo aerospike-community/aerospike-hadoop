@@ -25,11 +25,14 @@ import java.util.StringTokenizer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.util.GenericOptionsParser;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
@@ -44,7 +47,7 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeInputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeTextInputFormat;
 
-public class WordCount {
+public class WordCount extends Configured implements Tool {
 
 	private static final Log log = LogFactory.getLog(WordCount.class);
 
@@ -79,35 +82,32 @@ public class WordCount {
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
+	public int run(final String[] args) throws Exception {
 
-		log.info("starting");
+		log.info("run starting");
 
-		JobConf conf = new JobConf(WordCount.class);
-		conf.setJobName("AerospikeWordCount");
+		final Configuration conf = getConf();
 
-		conf.setOutputKeyClass(Text.class);
-		conf.setOutputValueClass(IntWritable.class);
+		JobConf job = new JobConf(conf, WordCount.class);
+		job.setJobName("AerospikeWordCount");
 
-		conf.setMapperClass(Map.class);
-		conf.setCombinerClass(Reduce.class);
-		conf.setReducerClass(Reduce.class);
-		// conf.setNumMapTasks(0);
-		conf.setInputFormat(AerospikeTextInputFormat.class);
-		conf.setOutputFormat(TextOutputFormat.class);
+		job.setInputFormat(AerospikeTextInputFormat.class);
+		job.setMapperClass(Map.class);
+		job.setCombinerClass(Reduce.class);
+		job.setReducerClass(Reduce.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(IntWritable.class);
+		job.setOutputFormat(TextOutputFormat.class);
 
-		AerospikeInputFormat.setInputPaths(args[0]);
-		
-		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+		FileOutputFormat.setOutputPath(job, new Path(args[0]));
 
-		JobClient.runJob(conf);
+		JobClient.runJob(job);
 
 		log.info("finished");
+		return 0;
+	}
 
-		/*
-		boolean success = job.waitForCompletion(true);
-		log.info("finished with " + success);
-    System.exit(success ? 0 : 1);
-		*/
+	public static void main(final String[] args) throws Exception {
+		System.exit(ToolRunner.run(new WordCount(), args));
 	}
 }
