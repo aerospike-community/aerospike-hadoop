@@ -7,6 +7,8 @@
 * Investigate using multiple client "slices" to process InputFormats;
   can we exploit locality?
 
+* Run on multiple nodes; verify functionality.
+
 * The int_sum example is really lame; find a better example.
 
 * Add docs to www.aerospike.com github repository.
