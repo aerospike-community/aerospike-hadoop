@@ -24,9 +24,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.Progressable;
+
+import com.aerospike.client.AerospikeClient;
+import com.aerospike.client.Bin;
+import com.aerospike.client.Key;
+import com.aerospike.client.policy.ClientPolicy;
+import com.aerospike.client.policy.WritePolicy;
 
 public class AerospikeRecordWriter
 	extends RecordWriter
@@ -38,7 +45,12 @@ public class AerospikeRecordWriter
 	protected final Configuration cfg;
 	protected boolean initialized = false;
 
-	private String uri;
+	private static String namespace;
+	private static String setName;
+	private static String binName;
+	private static String keyName;
+	private static AerospikeClient client;
+	private static WritePolicy writePolicy;
 
 	private Progressable progressable;
 
@@ -53,10 +65,38 @@ public class AerospikeRecordWriter
 			initialized = true;
 			init();
 		}
+
+		String keystr = key.toString();
+		int valint = ((IntWritable) value).get();
+
+		Key kk = new Key(namespace, setName, keystr);
+		Bin bin1 = new Bin(keyName, keystr);
+		Bin bin2 = new Bin(binName, valint);
+
+		client.put(writePolicy, kk, bin1, bin2);
 	}
 
 	protected void init() throws IOException {
-		log.info("init");
+
+		String host = AerospikeConfigUtil.getOutputHost(cfg);
+		int port = AerospikeConfigUtil.getOutputPort(cfg);
+
+		namespace = AerospikeConfigUtil.getOutputNamespace(cfg);
+		setName = AerospikeConfigUtil.getOutputSetName(cfg);
+		binName = AerospikeConfigUtil.getOutputBinName(cfg);
+		keyName = AerospikeConfigUtil.getOutputKeyName(cfg);
+
+		log.info(String.format("init: %s %d %s %s %s %s",
+													 host, port, namespace, setName, binName, keyName));
+
+		ClientPolicy policy = new ClientPolicy();
+		policy.user = "";
+		policy.password = "";
+		policy.failIfNotConnected = true;
+
+		client = new AerospikeClient(policy, host, port);
+
+		writePolicy = new WritePolicy();
 	}
 
 	@Override
@@ -73,5 +113,7 @@ public class AerospikeRecordWriter
 	protected void doClose(Progressable progressable) {
 		log.info("doClose");
 		initialized = false;
+		if (client != null)
+			client.close();
 	}
 }

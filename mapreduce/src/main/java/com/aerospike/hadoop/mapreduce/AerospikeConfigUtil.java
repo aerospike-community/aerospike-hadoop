@@ -26,6 +26,8 @@ import org.apache.hadoop.conf.Configuration;
 public class AerospikeConfigUtil {
 	private static final Log log = LogFactory.getLog(AerospikeConfigUtil.class);
 
+	// ---------------- INPUT ----------------
+
 	public static final String INPUT_HOST = "aerospike.input.host";
 	public static final String DEFAULT_INPUT_HOST = "localhost";
 	public static final String INPUT_PORT = "aerospike.input.port";
@@ -38,6 +40,19 @@ public class AerospikeConfigUtil {
 	public static final String INPUT_NUMRANGE_BEGIN = "aerospike.input.numrange.begin";
 	public static final String INPUT_NUMRANGE_END = "aerospike.input.numrange.end";
 	public static final long INVALID_LONG = 762492121482318889L;
+
+	// ---------------- OUTPUT ----------------
+
+	public static final String OUTPUT_HOST = "aerospike.output.host";
+	public static final String DEFAULT_OUTPUT_HOST = "localhost";
+	public static final String OUTPUT_PORT = "aerospike.output.port";
+	public static final int DEFAULT_OUTPUT_PORT = 3000;
+	public static final String OUTPUT_NAMESPACE = "aerospike.output.namespace";
+	public static final String OUTPUT_SETNAME = "aerospike.output.setname";
+	public static final String OUTPUT_BINNAME = "aerospike.output.binname";
+	public static final String OUTPUT_KEYNAME = "aerospike.output.keyname";
+
+	// ---------------- INPUT ----------------
 
 	public static void setInputHost(Configuration conf, String host) {
 		log.info("setting " + INPUT_HOST + " to " + host);
@@ -138,6 +153,78 @@ public class AerospikeConfigUtil {
 		log.info("using " + INPUT_NUMRANGE_END + " = " + end);
 		return end;
 	}
+
+	// ---------------- OUTPUT ----------------
+
+	public static void setOutputHost(Configuration conf, String host) {
+		log.info("setting " + OUTPUT_HOST + " to " + host);
+		conf.set(OUTPUT_HOST, host);
+	}
+
+	public static String getOutputHost(Configuration conf) {
+		String host = conf.get(OUTPUT_HOST, DEFAULT_OUTPUT_HOST);
+		log.info("using " + OUTPUT_HOST + " = " + host);
+		return host;
+	}
+
+	public static void setOutputPort(Configuration conf, int port) {
+		log.info("setting " + OUTPUT_PORT + " to " + port);
+		conf.setInt(OUTPUT_PORT, port);
+	}
+
+	public static int getOutputPort(Configuration conf) {
+		int port = conf.getInt(OUTPUT_PORT, DEFAULT_OUTPUT_PORT);
+		log.info("using " + OUTPUT_PORT + " = " + port);
+		return port;
+	}
+
+	public static void setOutputNamespace(Configuration conf, String namespace) {
+		log.info("setting " + OUTPUT_NAMESPACE + " to " + namespace);
+		conf.set(OUTPUT_NAMESPACE, namespace);
+	}
+
+	public static String getOutputNamespace(Configuration conf) {
+		String namespace = conf.get(OUTPUT_NAMESPACE);
+		if (namespace == null)
+			throw new UnsupportedOperationException("you must set the namespace");
+		log.info("using " + OUTPUT_NAMESPACE + " = " + namespace);
+		return namespace;
+	}
+
+	public static void setOutputSetName(Configuration conf, String setname) {
+		log.info("setting " + OUTPUT_SETNAME + " to " + setname);
+		conf.set(OUTPUT_SETNAME, setname);
+	}
+
+	public static String getOutputSetName(Configuration conf) {
+		String setname = conf.get(OUTPUT_SETNAME);
+		log.info("using " + OUTPUT_SETNAME + " = " + setname);
+		return setname;
+	}
+
+	public static void setOutputBinName(Configuration conf, String binname) {
+		log.info("setting " + OUTPUT_BINNAME + " to " + binname);
+		conf.set(OUTPUT_BINNAME, binname);
+	}
+
+	public static String getOutputBinName(Configuration conf) {
+		String binname = conf.get(OUTPUT_BINNAME);
+		log.info("using " + OUTPUT_BINNAME + " = " + binname);
+		return binname;
+	}
+
+	public static void setOutputKeyName(Configuration conf, String keyname) {
+		log.info("setting " + OUTPUT_KEYNAME + " to " + keyname);
+		conf.set(OUTPUT_KEYNAME, keyname);
+	}
+
+	public static String getOutputKeyName(Configuration conf) {
+		String keyname = conf.get(OUTPUT_KEYNAME);
+		log.info("using " + OUTPUT_KEYNAME + " = " + keyname);
+		return keyname;
+	}
+
+	// ---------------- COMMON ----------------
 
 	public static org.apache.hadoop.mapred.JobConf asJobConf(Configuration cfg) {
 		return cfg instanceof org.apache.hadoop.mapred.JobConf

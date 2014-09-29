@@ -1,5 +1,7 @@
 * Create OutputFormat.
 
+* OutputFormat generic for key/value.
+
 * Survey other connectors for best practice with scan/query specification.
 
 * What should the key be in the map calls?
