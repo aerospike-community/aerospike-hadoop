@@ -16,7 +16,7 @@
  * permissions and limitations under the License.
  */
 
-package com.aerospike.hadoop.examples.wordcount;
+package com.aerospike.hadoop.examples.wordcountoutput;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -46,10 +46,11 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 
 import com.aerospike.hadoop.mapreduce.AerospikeInputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeTextInputFormat;
+import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
 
-public class WordCount extends Configured implements Tool {
+public class WordCountOutput extends Configured implements Tool {
 
-	private static final Log log = LogFactory.getLog(WordCount.class);
+	private static final Log log = LogFactory.getLog(WordCountOutput.class);
 
 	public static class Map extends MapReduceBase implements
 			Mapper<LongWritable, Text, Text, IntWritable> {
@@ -88,18 +89,18 @@ public class WordCount extends Configured implements Tool {
 
 		final Configuration conf = getConf();
 
-		JobConf job = new JobConf(conf, WordCount.class);
-		job.setJobName("AerospikeWordCount");
+		JobConf job = new JobConf(conf, WordCountOutput.class);
+		job.setJobName("AerospikeWordCountOutput");
 
 		job.setInputFormat(AerospikeTextInputFormat.class);
+
 		job.setMapperClass(Map.class);
 		job.setCombinerClass(Reduce.class);
 		job.setReducerClass(Reduce.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);
-		job.setOutputFormat(TextOutputFormat.class);
 
-		FileOutputFormat.setOutputPath(job, new Path(args[0]));
+		job.setOutputFormat(AerospikeOutputFormat.class);
 
 		JobClient.runJob(job);
 
@@ -108,6 +109,6 @@ public class WordCount extends Configured implements Tool {
 	}
 
 	public static void main(final String[] args) throws Exception {
-		System.exit(ToolRunner.run(new WordCount(), args));
+		System.exit(ToolRunner.run(new WordCountOutput(), args));
 	}
 }

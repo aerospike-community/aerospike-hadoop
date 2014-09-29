@@ -16,7 +16,7 @@
  * permissions and limitations under the License.
  */
 
-package com.aerospike.hadoop.examples.intsum;
+package com.aerospike.hadoop.examples.intsuminput;
 
 import java.io.IOException;
 import java.util.StringTokenizer;
@@ -38,9 +38,9 @@ import org.apache.hadoop.util.ToolRunner;
 
 import com.aerospike.hadoop.mapreduce.AerospikeLongInputFormat;
 
-public class IntSum extends Configured implements Tool {
+public class IntSumInput extends Configured implements Tool {
 
-	private static final Log log = LogFactory.getLog(IntSum.class);
+	private static final Log log = LogFactory.getLog(IntSumInput.class);
 
   public static class TokenizerMapper 
        extends Mapper<Object, LongWritable, IntWritable, LongWritable> {
@@ -76,11 +76,11 @@ public class IntSum extends Configured implements Tool {
 		final Configuration conf = getConf();
 
 		@SuppressWarnings("deprecation")
-		final Job job = new Job(conf, "AerospikeIntSum");
+		final Job job = new Job(conf, "AerospikeIntSumInput");
 
 		log.info("run starting");
 
-    job.setJarByClass(IntSum.class);
+    job.setJarByClass(IntSumInput.class);
     job.setInputFormatClass(AerospikeLongInputFormat.class);
     job.setMapperClass(TokenizerMapper.class);
     job.setCombinerClass(IntSumReducer.class);
@@ -96,6 +96,6 @@ public class IntSum extends Configured implements Tool {
 	}
 
 	public static void main(final String[] args) throws Exception {
-		System.exit(ToolRunner.run(new IntSum(), args));
+		System.exit(ToolRunner.run(new IntSumInput(), args));
 	}
 }

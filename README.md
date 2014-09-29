@@ -23,8 +23,9 @@ Building
     ./gradlew :mapreduce:jar
 
     # Build the example programs.
-    ./gradlew :examples:word_count:installApp
-    ./gradlew :examples:int_sum:installApp
+    ./gradlew :examples:word_count_input:installApp
+    ./gradlew :examples:int_sum_input:installApp
+    ./gradlew :examples:word_count_output:installApp
 
 
 Setup Target Input Text File
@@ -48,20 +49,20 @@ Setup Sample Data
 
     cd ~/aerospike/aerospike-hadoop
 
-    # Loads a text file for word_count demo.
+    # Loads a text file for word_count_input demo.
     ./gradlew sampledata:run \
         -PappArgs="['localhost:3000:test:words:bin1', \
                     'text-file', \
                     '/tmp/input']"
 
-    # Generates sequential integers for int_sum demo.
+    # Generates sequential integers for int_sum_input demo.
     ./gradlew sampledata:run \
         -PappArgs="['localhost:3000:test:integers:bin1', \
                     'seq-int', \
                     '10000']"
 
 
-Running Examples
+Running Input Examples
 ----------------------------------------------------------------
 
     export HADOOP_PREFIX=/usr/local/hadoop
@@ -82,11 +83,11 @@ Running Examples
     # Run the Hadoop job.
     cd ~/aerospike/aerospike-hadoop
 
-    # Run the word_count example (Old Hadoop API)
+    # Run the word_count_input example (Old Hadoop API)
     $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
     $HADOOP_PREFIX/bin/hadoop \
         jar \
-        ./examples/word_count/build/libs/word_count.jar \
+        ./examples/word_count_input/build/libs/word_count_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=words \
         -D aerospike.input.binname=bin1 \
@@ -95,11 +96,11 @@ Running Examples
 
     # -- OR --
 
-    # Run the int_sum example (New Hadoop API)
+    # Run the int_sum_input example (New Hadoop API)
     $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
     $HADOOP_PREFIX/bin/hadoop \
         jar \
-        ./examples/int_sum/build/libs/int_sum.jar \
+        ./examples/int_sum_input/build/libs/int_sum_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
         -D aerospike.input.binname=bin1 \
@@ -108,11 +109,88 @@ Running Examples
 
     # -- OR --
 
-    # Run the int_sum range example (New Hadoop API)
+    # Run the int_sum_input range example (New Hadoop API)
     $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
     $HADOOP_PREFIX/bin/hadoop \
         jar \
-        ./examples/int_sum/build/libs/int_sum.jar \
+        ./examples/int_sum_input/build/libs/int_sum_input.jar \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=integers \
+        -D aerospike.input.binname=bin1 \
+        -D aerospike.input.operation=numrange \
+        -D aerospike.input.numrange.begin=100 \
+        -D aerospike.input.numrange.end=200 \
+        /tmp/output
+
+    # Inspect the results.
+    $HADOOP_PREFIX/bin/hadoop fs -ls /tmp/output
+    rm -rf /tmp/output
+    $HADOOP_PREFIX/bin/hadoop fs -copyToLocal /tmp/output /tmp
+    less /tmp/output/part*00000
+
+    # Stop HDFS
+    $HADOOP_PREFIX/sbin/stop-dfs.sh
+
+
+Running Output Examples
+----------------------------------------------------------------
+
+    export HADOOP_PREFIX=/usr/local/hadoop
+
+    # Format HDFS
+    rm -rf /tmp/hadoop-$USER/dfs/data
+    $HADOOP_PREFIX/bin/hdfs namenode -format
+
+    # Start HDFS
+    $HADOOP_PREFIX/sbin/start-dfs.sh
+
+    # Check for {Secondary,}NameNode and DataNode
+    jps
+
+     # Make some directories
+    $HADOOP_PREFIX/bin/hdfs dfs -mkdir /tmp
+
+    # Run the Hadoop job.
+    cd ~/aerospike/aerospike-hadoop
+
+    # Run the word_count_output example (Old Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/word_count_output/build/libs/word_count_output.jar \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=words \
+        -D aerospike.input.binname=bin1 \
+        -D aerospike.input.operation=scan \
+        -D aerospike.output.namespace=test \
+        -D aerospike.output.setname=counts \
+        -D aerospike.output.binname=value \
+        -D aerospike.output.keyname=key
+
+    # Inspect the results:
+    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
+        -c 'SELECT * FROM test.counts'
+
+    # -- OR --
+
+    # Run the int_sum_input example (New Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/int_sum_input/build/libs/int_sum_input.jar \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=integers \
+        -D aerospike.input.binname=bin1 \
+        -D aerospike.input.operation=scan \
+        /tmp/output
+
+    # -- OR --
+
+    # Run the int_sum_input range example (New Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/int_sum_input/build/libs/int_sum_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
         -D aerospike.input.binname=bin1 \
