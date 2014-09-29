@@ -84,7 +84,7 @@ public class AerospikeConfigUtil {
 	public static String getInputNamespace(Configuration conf) {
 		String namespace = conf.get(INPUT_NAMESPACE);
 		if (namespace == null)
-			throw new UnsupportedOperationException("you must set the namespace");
+			throw new UnsupportedOperationException("you must set the input namespace");
 		log.info("using " + INPUT_NAMESPACE + " = " + namespace);
 		return namespace;
 	}
@@ -136,7 +136,7 @@ public class AerospikeConfigUtil {
 	public static long getInputNumRangeBegin(Configuration conf) {
 		long begin = conf.getLong(INPUT_NUMRANGE_BEGIN, INVALID_LONG);
 		if (begin == INVALID_LONG && getInputOperation(conf).equals("numrange"))
-			throw new UnsupportedOperationException("missing numrange begin");
+			throw new UnsupportedOperationException("missing input numrange begin");
 		log.info("using " + INPUT_NUMRANGE_BEGIN + " = " + begin);
 		return begin;
 	}
@@ -149,7 +149,7 @@ public class AerospikeConfigUtil {
 	public static long getInputNumRangeEnd(Configuration conf) {
 		long end = conf.getLong(INPUT_NUMRANGE_END, INVALID_LONG);
 		if (end == INVALID_LONG && getInputOperation(conf).equals("numrange"))
-			throw new UnsupportedOperationException("missing numrange end");
+			throw new UnsupportedOperationException("missing input numrange end");
 		log.info("using " + INPUT_NUMRANGE_END + " = " + end);
 		return end;
 	}
@@ -186,7 +186,7 @@ public class AerospikeConfigUtil {
 	public static String getOutputNamespace(Configuration conf) {
 		String namespace = conf.get(OUTPUT_NAMESPACE);
 		if (namespace == null)
-			throw new UnsupportedOperationException("you must set the namespace");
+			throw new UnsupportedOperationException("you must set the output namespace");
 		log.info("using " + OUTPUT_NAMESPACE + " = " + namespace);
 		return namespace;
 	}

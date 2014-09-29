@@ -34,7 +34,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Mapper;
@@ -44,8 +44,6 @@ import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TextOutputFormat;
 
-import com.aerospike.hadoop.mapreduce.AerospikeInputFormat;
-import com.aerospike.hadoop.mapreduce.AerospikeTextInputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
 
 public class WordCountOutput extends Configured implements Tool {
@@ -92,7 +90,9 @@ public class WordCountOutput extends Configured implements Tool {
 		JobConf job = new JobConf(conf, WordCountOutput.class);
 		job.setJobName("AerospikeWordCountOutput");
 
-		job.setInputFormat(AerospikeTextInputFormat.class);
+    for (int ii = 0; ii < args.length; ++ii) {
+      FileInputFormat.addInputPath(job, new Path(args[ii]));
+    }
 
 		job.setMapperClass(Map.class);
 		job.setCombinerClass(Reduce.class);

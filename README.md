@@ -147,8 +147,10 @@ Running Output Examples
     # Check for {Secondary,}NameNode and DataNode
     jps
 
-     # Make some directories
+     # Load the test words into HDFS.
     $HADOOP_PREFIX/bin/hdfs dfs -mkdir /tmp
+    $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/words
+    $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal /tmp/input /tmp/words
 
     # Run the Hadoop job.
     cd ~/aerospike/aerospike-hadoop
@@ -158,52 +160,15 @@ Running Output Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/word_count_output/build/libs/word_count_output.jar \
-        -D aerospike.input.namespace=test \
-        -D aerospike.input.setname=words \
-        -D aerospike.input.binname=bin1 \
-        -D aerospike.input.operation=scan \
         -D aerospike.output.namespace=test \
         -D aerospike.output.setname=counts \
         -D aerospike.output.binname=value \
-        -D aerospike.output.keyname=key
+        -D aerospike.output.keyname=key \
+        /tmp/words
 
     # Inspect the results:
     ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
         -c 'SELECT * FROM test.counts'
-
-    # -- OR --
-
-    # Run the int_sum_input example (New Hadoop API)
-    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
-    $HADOOP_PREFIX/bin/hadoop \
-        jar \
-        ./examples/int_sum_input/build/libs/int_sum_input.jar \
-        -D aerospike.input.namespace=test \
-        -D aerospike.input.setname=integers \
-        -D aerospike.input.binname=bin1 \
-        -D aerospike.input.operation=scan \
-        /tmp/output
-
-    # -- OR --
-
-    # Run the int_sum_input range example (New Hadoop API)
-    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
-    $HADOOP_PREFIX/bin/hadoop \
-        jar \
-        ./examples/int_sum_input/build/libs/int_sum_input.jar \
-        -D aerospike.input.namespace=test \
-        -D aerospike.input.setname=integers \
-        -D aerospike.input.binname=bin1 \
-        -D aerospike.input.operation=numrange \
-        -D aerospike.input.numrange.begin=100 \
-        -D aerospike.input.numrange.end=200 \
-        /tmp/output
-
-    # Inspect the results.
-    $HADOOP_PREFIX/bin/hadoop fs -ls /tmp/output
-    rm -rf /tmp/output
-    $HADOOP_PREFIX/bin/hadoop fs -copyToLocal /tmp/output /tmp
-    less /tmp/output/part*00000
 
     # Stop HDFS
     $HADOOP_PREFIX/sbin/stop-dfs.sh
