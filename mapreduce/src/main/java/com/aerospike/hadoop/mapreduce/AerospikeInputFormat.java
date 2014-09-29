@@ -61,8 +61,9 @@ public abstract class AerospikeInputFormat<KK, VV>
 	public List<InputSplit> getSplits(JobContext context) throws IOException {
 		// Delegate to the old API.
 		Configuration cfg = context.getConfiguration();
-		JobConf jobconf = (cfg instanceof JobConf ? (JobConf) cfg : new JobConf(cfg));
-		return Arrays.asList((InputSplit[]) getSplits(jobconf, jobconf.getNumMapTasks()));
+		JobConf jobconf = AerospikeConfigUtil.asJobConf(cfg);
+		return Arrays.asList((InputSplit[]) getSplits(jobconf,
+																									jobconf.getNumMapTasks()));
 	}
 
 	public abstract RecordReader<KK, VV> createRecordReader(

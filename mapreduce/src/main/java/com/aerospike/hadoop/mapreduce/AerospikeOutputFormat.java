@@ -26,7 +26,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.Progressable;
 
@@ -36,8 +38,7 @@ public class AerospikeOutputFormat
 
 	private static final Log log = LogFactory.getLog(AerospikeOutputFormat.class);
 
-	public static class AerospikeOutputCommitter
-		extends org.apache.hadoop.mapreduce.OutputCommitter {
+	public static class AerospikeOutputCommitter extends OutputCommitter {
 
 		@Override
 		public void setupJob(JobContext jobContext) throws IOException {}
@@ -101,9 +102,11 @@ public class AerospikeOutputFormat
 
 		@Override
 		@Deprecated
-		public void cleanupJob(org.apache.hadoop.mapred.JobContext context) throws IOException {
+		public void cleanupJob(org.apache.hadoop.mapred.JobContext context
+													 ) throws IOException {
 			// no-op
-			// added for compatibility with hadoop 0.20.x (used by old tools, such as Cascalog)
+			// added for compatibility with hadoop 0.20.x (used by old
+			// tools, such as Cascalog)
 		}
 	}
 	
@@ -111,16 +114,13 @@ public class AerospikeOutputFormat
 	// new API - just delegates to the Old API
 	//
 	@Override
-	public org.apache.hadoop.mapreduce.RecordWriter getRecordWriter(TaskAttemptContext context) {
+	public RecordWriter getRecordWriter(TaskAttemptContext context) {
 		Configuration cfg = context.getConfiguration();
 
 		org.apache.hadoop.mapred.JobConf jobconf =
-			(cfg instanceof org.apache.hadoop.mapred.JobConf
-			 ? (org.apache.hadoop.mapred.JobConf) cfg
-			 : new org.apache.hadoop.mapred.JobConf(cfg));
+			AerospikeConfigUtil.asJobConf(cfg);
 
-		return (org.apache.hadoop.mapreduce.RecordWriter)
-			getRecordWriter(null, jobconf, null, context);
+		return (RecordWriter) getRecordWriter(null, jobconf, null, context);
 	}
 
 	@Override
@@ -131,7 +131,7 @@ public class AerospikeOutputFormat
 	}
 
 	@Override
-	public org.apache.hadoop.mapreduce.OutputCommitter getOutputCommitter(TaskAttemptContext context) {
+	public OutputCommitter getOutputCommitter(TaskAttemptContext context) {
 		return new AerospikeOutputCommitter();
 	}
 
@@ -139,16 +139,22 @@ public class AerospikeOutputFormat
 	// old API
 	//
 	@Override
-	public org.apache.hadoop.mapred.RecordWriter getRecordWriter(FileSystem ignored, org.apache.hadoop.mapred.JobConf job, String name, Progressable progress) {
+	public org.apache.hadoop.mapred.RecordWriter
+		        getRecordWriter(FileSystem ignored,
+														org.apache.hadoop.mapred.JobConf job,
+														String name, Progressable progress) {
 		return new AerospikeRecordWriter(job, progress);
 	}
 
 	@Override
-	public void checkOutputSpecs(FileSystem ignored, org.apache.hadoop.mapred.JobConf cfg) throws IOException {
+	public void checkOutputSpecs(FileSystem ignored,
+															 org.apache.hadoop.mapred.JobConf cfg
+															 ) throws IOException {
 		init(cfg);
 	}
 
-	// NB: all changes to the config objects are discarded before the job is submitted if _the old MR api_ is used
+	// NB: all changes to the config objects are discarded before the
+	// job is submitted if _the old MR api_ is used
 	private void init(Configuration cfg) throws IOException {
 		log.info(String.format("init"));
 	}

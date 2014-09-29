@@ -138,4 +138,10 @@ public class AerospikeConfigUtil {
 		log.info("using " + INPUT_NUMRANGE_END + " = " + end);
 		return end;
 	}
+
+	public static org.apache.hadoop.mapred.JobConf asJobConf(Configuration cfg) {
+		return cfg instanceof org.apache.hadoop.mapred.JobConf
+			? (org.apache.hadoop.mapred.JobConf) cfg
+			: new org.apache.hadoop.mapred.JobConf(cfg);
+	}
 }
