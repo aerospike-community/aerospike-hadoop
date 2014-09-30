@@ -46,6 +46,16 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 
 import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
 
+// These are all needed by MyOutputFormat.
+import org.apache.hadoop.util.Progressable;
+import org.apache.hadoop.mapred.RecordWriter;
+import com.aerospike.client.AerospikeClient;
+import com.aerospike.client.Bin;
+import com.aerospike.client.Key;
+import com.aerospike.client.policy.ClientPolicy;
+import com.aerospike.client.policy.WritePolicy;
+import com.aerospike.hadoop.mapreduce.AerospikeRecordWriter;
+
 public class WordCountOutput extends Configured implements Tool {
 
 	private static final Log log = LogFactory.getLog(WordCountOutput.class);
@@ -81,6 +91,35 @@ public class WordCountOutput extends Configured implements Tool {
 		}
 	}
 
+	public static class MyOutputFormat
+		extends AerospikeOutputFormat<Text, IntWritable> {
+
+		public static class MyRecordWriter
+			extends AerospikeRecordWriter<Text, IntWritable> {
+
+			public MyRecordWriter(Configuration cfg, Progressable progressable) {
+				super(cfg, progressable);
+			}
+
+			@Override
+			public void writeAerospike(Text key, IntWritable value,
+																 AerospikeClient client, WritePolicy writePolicy,
+																 String namespace, String setName,
+																 String binName, String keyName
+																 ) throws IOException {
+				Key kk = new Key(namespace, setName, key.toString());
+				Bin bin1 = new Bin(keyName, key.toString());
+				Bin bin2 = new Bin(binName, value.get());
+				client.put(writePolicy, kk, bin1, bin2);
+			}
+		}
+
+		public RecordWriter<Text, IntWritable>
+			        getAerospikeRecordWriter(Configuration conf, Progressable prog) {
+			return new MyRecordWriter(conf, prog);
+		}
+	}
+
 	public int run(final String[] args) throws Exception {
 
 		log.info("run starting");
@@ -100,7 +139,7 @@ public class WordCountOutput extends Configured implements Tool {
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);
 
-		job.setOutputFormat(AerospikeOutputFormat.class);
+		job.setOutputFormat(MyOutputFormat.class);
 
 		JobClient.runJob(job);
 

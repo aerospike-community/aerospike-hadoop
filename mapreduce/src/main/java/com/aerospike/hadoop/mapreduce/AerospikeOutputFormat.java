@@ -32,9 +32,9 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.Progressable;
 
-public class AerospikeOutputFormat
-	extends OutputFormat
-	implements org.apache.hadoop.mapred.OutputFormat {
+public abstract class AerospikeOutputFormat<KK, VV>
+	extends OutputFormat<KK, VV>
+	implements org.apache.hadoop.mapred.OutputFormat<KK, VV> {
 
 	private static final Log log = LogFactory.getLog(AerospikeOutputFormat.class);
 
@@ -109,18 +109,18 @@ public class AerospikeOutputFormat
 			// tools, such as Cascalog)
 		}
 	}
+
+	public abstract org.apache.hadoop.mapred.RecordWriter<KK, VV>
+		        getAerospikeRecordWriter(Configuration conf, Progressable progress);
 	
 	//
 	// new API - just delegates to the Old API
 	//
+	@SuppressWarnings("unchecked")
 	@Override
-	public RecordWriter getRecordWriter(TaskAttemptContext context) {
-		Configuration cfg = context.getConfiguration();
-
-		org.apache.hadoop.mapred.JobConf jobconf =
-			AerospikeConfigUtil.asJobConf(cfg);
-
-		return (RecordWriter) getRecordWriter(null, jobconf, null, context);
+	public RecordWriter<KK, VV> getRecordWriter(TaskAttemptContext context) {
+		Configuration conf = context.getConfiguration();
+		return (RecordWriter<KK, VV>) getAerospikeRecordWriter(conf, context);
 	}
 
 	@Override
@@ -139,11 +139,11 @@ public class AerospikeOutputFormat
 	// old API
 	//
 	@Override
-	public org.apache.hadoop.mapred.RecordWriter
+	public org.apache.hadoop.mapred.RecordWriter<KK, VV>
 		        getRecordWriter(FileSystem ignored,
 														org.apache.hadoop.mapred.JobConf job,
 														String name, Progressable progress) {
-		return new AerospikeRecordWriter(job, progress);
+		return getAerospikeRecordWriter(job, progress);
 	}
 
 	@Override
