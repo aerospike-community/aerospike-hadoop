@@ -49,6 +49,15 @@ public abstract class AerospikeRecordReader<VV>
 	extends RecordReader<LongWritable, VV>
 	implements org.apache.hadoop.mapred.RecordReader<LongWritable, VV> {
 
+	private class KeyRecPair {
+		public AerospikeKey key;
+		public AerospikeRecord rec;
+		public KeyRecPair(AerospikeKey key, AerospikeRecord rec) {
+			this.key = key;
+			this.rec = rec;
+		}
+	}
+
 	private static final Log log = LogFactory.getLog(AerospikeRecordReader.class);
 
 	private ASSCanReader scanReader = null;

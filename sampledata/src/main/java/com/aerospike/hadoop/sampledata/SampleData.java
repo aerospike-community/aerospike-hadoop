@@ -82,15 +82,20 @@ public class SampleData {
 
 	public static void runTextFile(String[] args, int argi) throws Exception {
 
-		String path = args[argi++];
-		int nrecs = 0;
-		BufferedReader br = new BufferedReader(new FileReader(path));
-		for (String line; (line = br.readLine()) != null; ) {
-			Key key = new Key(namespace, setName, nrecs++);
-			Bin bin = new Bin(binName, line);
-			client.put(writePolicy, key, bin);
+		while (argi < args.length) {
+			String path = args[argi++];
+			log.info("processing " + path + " ...");
+			int nrecs = 0;
+			BufferedReader br = new BufferedReader(new FileReader(path));
+			for (String line; (line = br.readLine()) != null; ) {
+				// The key is "path:linenum".
+				String keystr = path + ':' + Long.toString(nrecs++);
+				Key key = new Key(namespace, setName, keystr);
+				Bin bin = new Bin(binName, line);
+				client.put(writePolicy, key, bin);
+			}
+			log.info("inserted " + nrecs + " records");
 		}
-		log.info("inserted " + nrecs + " records");
 	}
 
 	public static void runSeqInt(String[] args, int argi) throws Exception {

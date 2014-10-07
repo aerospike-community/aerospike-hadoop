@@ -26,6 +26,7 @@ Building
     ./gradlew :examples:word_count_input:installApp
     ./gradlew :examples:int_sum_input:installApp
     ./gradlew :examples:word_count_output:installApp
+    ./gradlew :examples:session_rollup:installApp
 
 
 Setup Target Input Text File
@@ -60,6 +61,13 @@ Setup Sample Data
         -PappArgs="['localhost:3000:test:integers:bin1', \
                     'seq-int', \
                     '10000']"
+
+    # Load log files for the session_rollup demo.
+    ./gradlew sampledata:run \
+        -PappArgs="['localhost:3000:test:logrecs:bin1', \
+                'text-file', \
+                '/home/ksedgwic/aerospike/doc/data/WorldCup/wc_day52_1.log', \
+                '/home/ksedgwic/aerospike/doc/data/WorldCup/wc_day52_2.log']"
 
 
 Running Input Examples

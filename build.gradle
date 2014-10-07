@@ -1,9 +1,12 @@
 subprojects{
     apply plugin:'java'
-    repositories {
-        mavenCentral()
-    }
+
     tasks.withType(JavaCompile) {
         options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+
+    repositories {
+        maven {   url "${System.env.HOME}/.m2/repository" }
+        mavenCentral()
     }
 }

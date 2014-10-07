@@ -1,4 +1,6 @@
-* OutputFormat generic for key/value.
+* Package examples together.
+
+* Generate better intsum example w/ Chris.  Use eBay advertiser/campaign data.
 
 * Survey other connectors for best practice with scan/query specification.
 
