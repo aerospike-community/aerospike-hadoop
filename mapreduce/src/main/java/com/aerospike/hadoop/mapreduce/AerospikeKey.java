@@ -26,12 +26,11 @@ import org.apache.hadoop.io.BinaryComparable;
 import org.apache.hadoop.io.WritableComparable;
 
 import com.aerospike.client.Key;
+import com.aerospike.client.Value;
 import com.aerospike.client.util.Packer;
 import com.aerospike.client.util.Unpacker.ObjectUnpacker;
 
-public class AerospikeKey
-	extends Key
-	implements WritableComparable<BinaryComparable> {
+public class AerospikeKey	extends Key	implements WritableComparable {
 
 	public AerospikeKey() {
 		super(null, null, null, null);
@@ -77,7 +76,7 @@ public class AerospikeKey
 				byte[] buff = new byte[buflen];
 				in.readFully(buff);
 				ObjectUnpacker unpack = new ObjectUnpacker(buff, 0, buff.length);
-				userKey = unpack.unpackObject();
+				userKey = Value.get(unpack.unpackObject());
 			}
 		}
 		catch (Exception ex) {
@@ -91,10 +90,10 @@ public class AerospikeKey
 		return key;
 	}
 
-	public int compareTo(BinaryComparable obj) {
-		AerospikeKey key = (AerospikeKey) obj;
+	public int compareTo(Object obj) {
+		AerospikeKey other = (AerospikeKey) obj;
 		byte[] left = this.digest;
-		byte[] right = key.digest;
+		byte[] right = other.digest;
 		for (int i = 0, j = 0; i < left.length && j < right.length; i++, j++) {
 			int a = (left[i] & 0xff);
 			int b = (right[j] & 0xff);
