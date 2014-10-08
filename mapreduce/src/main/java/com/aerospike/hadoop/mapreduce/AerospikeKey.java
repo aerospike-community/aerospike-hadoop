@@ -40,6 +40,13 @@ public class AerospikeKey	extends Key	implements WritableComparable {
 		super(key.namespace, key.digest, key.setName, key.userKey);
 	}
 
+	public void set(Key key) {
+		this.namespace = key.namespace;
+		this.digest = key.digest;
+		this.setName = key.setName;
+		this.userKey = key.userKey;
+	}
+
 	public void write(DataOutput out) throws IOException {
 		try {
 			out.writeUTF(namespace);

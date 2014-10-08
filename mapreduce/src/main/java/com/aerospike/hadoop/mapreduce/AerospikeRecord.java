@@ -47,6 +47,13 @@ public class AerospikeRecord extends Record implements Writable {
 		super(rec.bins, rec.duplicates, rec.generation, rec.expiration);
 	}
 
+	public void set(Record rec) {
+		this.bins = rec.bins;
+		this.duplicates = rec.duplicates;
+		this.generation = rec.generation;
+		this.expiration = rec.expiration;
+	}
+
 	public void write(DataOutput out) throws IOException {
 		try {
 			out.writeInt(generation);

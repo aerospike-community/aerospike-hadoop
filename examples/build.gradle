@@ -2,8 +2,11 @@ apply plugin:'java'
 
 subprojects{
     apply plugin:'java'
-}
 
-dependencies {
-  compile project(':mapreduce')
+    dependencies {
+        compile project(':mapreduce')
+        compile "com.aerospike:aerospike-client:3.0.30"
+        compile "org.apache.hadoop:hadoop-common:2.+"
+        compile "org.apache.hadoop:hadoop-mapreduce-client-jobclient:2.+"
+    }
 }

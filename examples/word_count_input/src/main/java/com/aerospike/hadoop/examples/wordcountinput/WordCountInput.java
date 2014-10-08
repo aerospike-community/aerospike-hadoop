@@ -24,6 +24,7 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -44,22 +45,29 @@ import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TextOutputFormat;
 
+import com.aerospike.hadoop.mapreduce.AerospikeConfigUtil;
 import com.aerospike.hadoop.mapreduce.AerospikeInputFormat;
-import com.aerospike.hadoop.mapreduce.AerospikeTextInputFormat;
+import com.aerospike.hadoop.mapreduce.AerospikeKey;
+import com.aerospike.hadoop.mapreduce.AerospikeRecord;
 
 public class WordCountInput extends Configured implements Tool {
 
 	private static final Log log = LogFactory.getLog(WordCountInput.class);
 
+	private static String binName;
+
 	public static class Map extends MapReduceBase implements
-			Mapper<LongWritable, Text, Text, IntWritable> {
+			Mapper<AerospikeKey, AerospikeRecord, Text, IntWritable> {
+
 		private final static IntWritable one = new IntWritable(1);
 		private Text word = new Text();
 
-		public void map(LongWritable key, Text value,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
-				throws IOException {
-			String line = value.toString();
+		public void map(AerospikeKey key,
+										AerospikeRecord rec,
+										OutputCollector<Text, IntWritable> output,
+										Reporter reporter
+										) throws IOException {
+			String line = rec.bins.get(binName).toString();
 			StringTokenizer tokenizer = new StringTokenizer(line);
 			while (tokenizer.hasMoreTokens()) {
 				word.set(tokenizer.nextToken());
@@ -71,14 +79,14 @@ public class WordCountInput extends Configured implements Tool {
 	public static class Reduce extends MapReduceBase implements
 			Reducer<Text, IntWritable, Text, IntWritable> {
 				
-		public void reduce(Text key, Iterator<IntWritable> values,
+		public void reduce(Text word, Iterator<IntWritable> values,
 				OutputCollector<Text, IntWritable> output, Reporter reporter)
 				throws IOException {
 			int sum = 0;
 			while (values.hasNext()) {
 				sum += values.next().get();
 			}
-			output.collect(key, new IntWritable(sum));
+			output.collect(word, new IntWritable(sum));
 		}
 	}
 
@@ -91,7 +99,9 @@ public class WordCountInput extends Configured implements Tool {
 		JobConf job = new JobConf(conf, WordCountInput.class);
 		job.setJobName("AerospikeWordCountInput");
 
-		job.setInputFormat(AerospikeTextInputFormat.class);
+		binName = AerospikeConfigUtil.getInputBinName(job);
+
+		job.setInputFormat(AerospikeInputFormat.class);
 		job.setMapperClass(Map.class);
 		job.setCombinerClass(Reduce.class);
 		job.setReducerClass(Reduce.class);

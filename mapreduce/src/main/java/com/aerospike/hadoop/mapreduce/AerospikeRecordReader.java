@@ -45,9 +45,10 @@ import com.aerospike.client.query.Statement;
 import com.aerospike.client.Record;
 import com.aerospike.client.ScanCallback;
 
-public abstract class AerospikeRecordReader<VV>
-	extends RecordReader<LongWritable, VV>
-	implements org.apache.hadoop.mapred.RecordReader<LongWritable, VV> {
+public class AerospikeRecordReader
+	extends RecordReader<AerospikeKey, AerospikeRecord>
+	implements org.apache.hadoop.mapred.RecordReader<AerospikeKey,
+																										 AerospikeRecord> {
 
 	private class KeyRecPair {
 		public AerospikeKey key;
@@ -63,7 +64,9 @@ public abstract class AerospikeRecordReader<VV>
 	private ASSCanReader scanReader = null;
 	private ASQueryReader queryReader = null;
 
-	private LinkedBlockingQueue<Record> queue = new LinkedBlockingQueue<Record>();
+	private LinkedBlockingQueue<KeyRecPair> queue = 
+		new LinkedBlockingQueue<KeyRecPair>();
+
 	private boolean isFinished = false;
 	private boolean isError = false;
 	private boolean isRunning = false;
@@ -71,14 +74,15 @@ public abstract class AerospikeRecordReader<VV>
 	private long numrangeBegin;
 	private long numrangeEnd;
 	
-	private LongWritable currentKey;
-	private VV currentValue;
+	private AerospikeKey currentKey;
+	private AerospikeRecord currentValue;
 
 	public class CallBack implements ScanCallback {
 		@Override
 		public void scanCallback(Key key, Record record) throws AerospikeException {
 			try {
-				queue.put(record);
+				queue.put(new KeyRecPair(new AerospikeKey(key),
+																 new AerospikeRecord(record)));
 			} catch (Exception ex) {
 				throw new AerospikeException("exception in queue.put", ex);
 			}
@@ -168,7 +172,8 @@ public abstract class AerospikeRecordReader<VV>
 						while (rs.next()) {
 							Key key = rs.getKey();
 							Record record = rs.getRecord();
-							queue.put(record);
+							queue.put(new KeyRecPair(new AerospikeKey(key),
+																			 new AerospikeRecord(record)));
 						}
 					}
 					finally {
@@ -223,19 +228,16 @@ public abstract class AerospikeRecordReader<VV>
 		log.info("node: " + node);
 	}
 
-	public LongWritable createKey() {
-		return new LongWritable();
-	}
+	public AerospikeKey createKey() { return new AerospikeKey(); }
 
-	// Must be provided by derived class ...
-	public abstract VV createValue();
+	public AerospikeRecord createValue() { return new AerospikeRecord(); }
 
-	protected LongWritable setCurrentKey(LongWritable oldApiKey,
-																			 LongWritable newApiKey,
-																			 long keyval) {
+	protected AerospikeKey setCurrentKey(AerospikeKey oldApiKey,
+																			 AerospikeKey newApiKey,
+																			 AerospikeKey keyval) {
 
 		if (oldApiKey == null) {
-			oldApiKey = new LongWritable();
+			oldApiKey = new AerospikeKey();
 			oldApiKey.set(keyval);
 		}
 
@@ -246,19 +248,29 @@ public abstract class AerospikeRecordReader<VV>
 		return oldApiKey;
 	}
 
-	// Must be provided by derived class ...
-	protected abstract VV setCurrentValue(VV oldApiValue,
-																				VV newApiValue,
-																				Object object);
+	protected AerospikeRecord setCurrentValue(AerospikeRecord oldApiVal,
+																						AerospikeRecord newApiVal,
+																						AerospikeRecord val) {
+		if (oldApiVal == null) {
+			oldApiVal = new AerospikeRecord();
+			oldApiVal.set(val);
+		}
 
-	public synchronized boolean next(LongWritable key, VV value)
+		// new API might not be used
+		if (newApiVal != null) {
+			newApiVal.set(val);
+		}
+		return oldApiVal;
+	}
+
+	public synchronized boolean next(AerospikeKey key, AerospikeRecord value)
 		throws IOException {
 
 		final int waitMSec = 1000;
 		int trials = 5;
 
 		try {
-			Record rec;
+			KeyRecPair pair;
 			while (true) {
 				if (isError)
 					return false;
@@ -279,16 +291,15 @@ public abstract class AerospikeRecordReader<VV>
 				} else if (isFinished && queue.size() == 0) {
 					return false;
 				} else if (queue.size() != 0) {
-					rec = queue.take();
+					pair = queue.take();
 					break;
 				}
 			}
 
-			long nextkey = 1;
-			Object nextval = rec.bins.get(binName);
+			// log.info("key=" + pair.key + ", val=" + pair.rec);
 
-			currentKey = setCurrentKey(currentKey, key, nextkey);
-			currentValue = setCurrentValue(currentValue, value, nextval);
+			currentKey = setCurrentKey(currentKey, key, pair.key);
+			currentValue = setCurrentValue(currentValue, value, pair.rec);
 
 		}
 		catch (Exception ex) {
@@ -355,12 +366,12 @@ public abstract class AerospikeRecordReader<VV>
 	}
 
 	@Override
-	public LongWritable getCurrentKey() throws IOException {
+	public AerospikeKey getCurrentKey() throws IOException {
 		return currentKey;
 	}
 
 	@Override
-	public VV getCurrentValue() {
+	public AerospikeRecord getCurrentValue() {
 		return currentValue;
 	}
 }

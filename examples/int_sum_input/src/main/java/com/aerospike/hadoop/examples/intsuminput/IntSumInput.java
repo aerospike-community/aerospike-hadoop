@@ -36,21 +36,26 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com.aerospike.hadoop.mapreduce.AerospikeLongInputFormat;
+import com.aerospike.hadoop.mapreduce.AerospikeConfigUtil;
+import com.aerospike.hadoop.mapreduce.AerospikeInputFormat;
+import com.aerospike.hadoop.mapreduce.AerospikeKey;
+import com.aerospike.hadoop.mapreduce.AerospikeRecord;
 
 public class IntSumInput extends Configured implements Tool {
 
 	private static final Log log = LogFactory.getLog(IntSumInput.class);
 
+	private static String binName;
+
   public static class TokenizerMapper 
-       extends Mapper<Object, LongWritable, IntWritable, LongWritable> {
+       extends Mapper<AerospikeKey, AerospikeRecord, IntWritable, LongWritable> {
     
     private final static IntWritable one = new IntWritable(1);
 		private LongWritable val = new LongWritable();
       
-    public void map(Object key, LongWritable value, Context context)
+    public void map(AerospikeKey key, AerospikeRecord rec, Context context)
 			throws IOException, InterruptedException {
-			val.set(value.get());
+			val.set(new Long((Integer) rec.bins.get(binName)));
 			context.write(one, val);
     }
   }
@@ -78,10 +83,12 @@ public class IntSumInput extends Configured implements Tool {
 		@SuppressWarnings("deprecation")
 		final Job job = new Job(conf, "AerospikeIntSumInput");
 
+		binName = AerospikeConfigUtil.getInputBinName(conf);
+
 		log.info("run starting");
 
     job.setJarByClass(IntSumInput.class);
-    job.setInputFormatClass(AerospikeLongInputFormat.class);
+    job.setInputFormatClass(AerospikeInputFormat.class);
     job.setMapperClass(TokenizerMapper.class);
     job.setCombinerClass(IntSumReducer.class);
     job.setReducerClass(IntSumReducer.class);

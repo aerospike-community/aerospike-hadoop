@@ -50,9 +50,10 @@ import com.aerospike.client.policy.ScanPolicy;
 /**
  * An {@link InputFormat} for data stored in an Aerospike database.
  */
-public abstract class AerospikeInputFormat<KK, VV>
-	extends InputFormat<KK, VV>
-	implements org.apache.hadoop.mapred.InputFormat<KK, VV> {
+public class AerospikeInputFormat
+	extends InputFormat<AerospikeKey, AerospikeRecord>
+	implements org.apache.hadoop.mapred.InputFormat<AerospikeKey,
+																										AerospikeRecord> {
 
 	private static final Log log = LogFactory.getLog(AerospikeInputFormat.class);
 
@@ -66,9 +67,11 @@ public abstract class AerospikeInputFormat<KK, VV>
 																									jobconf.getNumMapTasks()));
 	}
 
-	public abstract RecordReader<KK, VV> createRecordReader(
+	public RecordReader<AerospikeKey, AerospikeRecord> createRecordReader(
       InputSplit split, TaskAttemptContext context)
-		throws IOException, InterruptedException;
+		throws IOException, InterruptedException {
+		return new AerospikeRecordReader();
+	}
 
 	// ---------------- OLD API ----------------
 
@@ -121,8 +124,12 @@ public abstract class AerospikeInputFormat<KK, VV>
 		}
 	}
 
-	public abstract org.apache.hadoop.mapred.RecordReader<KK, VV> getRecordReader(
-      org.apache.hadoop.mapred.InputSplit split, JobConf job, Reporter reporter)
-		throws IOException;
+	public org.apache.hadoop.mapred.RecordReader<AerospikeKey, AerospikeRecord>
+		getRecordReader(org.apache.hadoop.mapred.InputSplit split,
+										JobConf job,
+										Reporter reporter
+										) throws IOException {
+		return new AerospikeRecordReader((AerospikeSplit) split);
+	}
 
 }
