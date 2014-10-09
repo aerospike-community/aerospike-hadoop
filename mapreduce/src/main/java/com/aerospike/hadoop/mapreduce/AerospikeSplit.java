@@ -98,9 +98,8 @@ public class AerospikeSplit
 	}
 
 	public String toString() {
-		return "type:" + type + "node:" + node + ", host:" + host
-			+ ", port:" + port + ", ns:" + namespace
-			+ ", setName:" + setName + ", binName:" + binName;
+		return type + ':' + node + ":" + host + ":" + port + ":"
+			+ namespace + ":" + setName + ":" + binName;
 	}
 
 	public void write(DataOutput out) throws IOException {

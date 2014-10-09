@@ -63,7 +63,7 @@ public class SessionRollup extends Configured implements Tool {
 	private static String binName;
 
 	public static class Map extends MapReduceBase implements
-			Mapper<LongWritable, Text, LongWritable, LongWritable> {
+			Mapper<AerospikeKey, AerospikeRecord, LongWritable, LongWritable> {
 
 		// Sample line format:
 		// 37518 - - [16/Jun/1998:02:48:36 +0000] "GET /images/hm_hola.gif HTTP/1.0" 200 2240
@@ -76,7 +76,6 @@ public class SessionRollup extends Configured implements Tool {
 
 		int mapcount = 0;
 
-		/*
 		public void map(AerospikeKey key,
 										AerospikeRecord rec,
 										OutputCollector<LongWritable, LongWritable> output,
@@ -101,8 +100,8 @@ public class SessionRollup extends Configured implements Tool {
 				// log.error("exception in map: " + ex);
 			}
 		}
-		*/
 
+		/*
 		public void map(LongWritable key,
 										Text rec,
 										OutputCollector<LongWritable, LongWritable> output,
@@ -127,6 +126,7 @@ public class SessionRollup extends Configured implements Tool {
 				// log.error("exception in map: " + ex);
 			}
 		}
+		*/
 	}
 
 	public static class Reduce
@@ -158,8 +158,6 @@ public class SessionRollup extends Configured implements Tool {
 
 		binName = AerospikeConfigUtil.getInputBinName(job);
 
-		// job.setInputFormat(AerospikeInputFormat.class);
-
 		job.setMapperClass(Map.class);
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(LongWritable.class);
@@ -169,9 +167,16 @@ public class SessionRollup extends Configured implements Tool {
 		job.setOutputValueClass(IntWritable.class);
 		job.setOutputFormat(TextOutputFormat.class);
 
-    for (int ii = 0; ii < args.length - 1; ++ii) {
-      FileInputFormat.addInputPath(job, new Path(args[ii]));
-    }
+		if (true) {
+			// Aerospike
+			job.setInputFormat(AerospikeInputFormat.class);
+		}
+		else {
+			// HDFS
+			for (int ii = 0; ii < args.length - 1; ++ii) {
+				FileInputFormat.addInputPath(job, new Path(args[ii]));
+			}
+		}
 
 		FileOutputFormat.setOutputPath(job, new Path(args[args.length - 1]));
 

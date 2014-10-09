@@ -1,10 +1,9 @@
-* Package examples together.
+General
+----------------------------------------------------------------
+
+* Figure out how to implement splits.
 
 * Generate better intsum example w/ Chris.  Use eBay advertiser/campaign data.
-
-* Survey other connectors for best practice with scan/query specification.
-
-* What should the key be in the map calls?
 
 * Investigate using multiple client "slices" to process InputFormats;
   can we exploit locality?
@@ -17,3 +16,11 @@
 
 * Benchmark vs HDFS.
 
+Session Rollup
+----------------------------------------------------------------
+
+* Break hits into sessions per IP.
+
+* Compute start/stop/nhits for each session.
+
+* Configure as HDFS -> MR -> Aerospike.

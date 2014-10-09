@@ -211,5 +211,17 @@ Running Output Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/session_rollup/build/libs/session_rollup.jar \
-        /tmp/wc_1M.log \
+        /tmp/wc_day52_1.log \
+        /tmp/wc_day52_2.log \
+        /tmp/output
+
+    # Run the session_rollup example (Old Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/session_rollup/build/libs/session_rollup.jar \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=logrecs \
+        -D aerospike.input.binname=bin1 \
+        -D aerospike.input.operation=scan \
         /tmp/output
