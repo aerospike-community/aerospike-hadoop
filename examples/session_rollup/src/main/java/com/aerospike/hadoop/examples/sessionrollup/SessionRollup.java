@@ -139,8 +139,10 @@ public class SessionRollup extends Configured implements Tool {
 											 Reporter reporter
 											 ) throws IOException {
 			int count = 0;
-			while (tstamps.hasNext())
+			while (tstamps.hasNext()) {
+				tstamps.next();
 				++count;
+			}
 			output.collect(userid, new IntWritable(count));
 		}
 	}
@@ -161,7 +163,7 @@ public class SessionRollup extends Configured implements Tool {
 		job.setMapperClass(Map.class);
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(LongWritable.class);
-		job.setCombinerClass(Reduce.class);
+		// job.setCombinerClass(Reduce.class);
 		job.setReducerClass(Reduce.class);
 		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(IntWritable.class);
