@@ -40,6 +40,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
@@ -62,7 +63,7 @@ public class SessionRollup extends Configured implements Tool {
 	private static String binName;
 
 	public static class Map extends MapReduceBase implements
-			Mapper<AerospikeKey, AerospikeRecord, LongWritable, LongWritable> {
+			Mapper<LongWritable, Text, LongWritable, LongWritable> {
 
 		// Sample line format:
 		// 37518 - - [16/Jun/1998:02:48:36 +0000] "GET /images/hm_hola.gif HTTP/1.0" 200 2240
@@ -75,6 +76,7 @@ public class SessionRollup extends Configured implements Tool {
 
 		int mapcount = 0;
 
+		/*
 		public void map(AerospikeKey key,
 										AerospikeRecord rec,
 										OutputCollector<LongWritable, LongWritable> output,
@@ -83,6 +85,32 @@ public class SessionRollup extends Configured implements Tool {
 
 			try {
 				String line = rec.bins.get(binName).toString();
+				Matcher matcher = pat.matcher(line);
+				if (!matcher.matches() || 7 != matcher.groupCount()) {
+					throw new RuntimeException("match failed on: " + line);
+				}
+				long userid = Long.parseLong(matcher.group(1));
+				String tstamp = matcher.group(4);
+				DateTime datetime = dateTimeParser.parseDateTime(tstamp);
+				long msec = datetime.toInstant().getMillis();
+				output.collect(new LongWritable(userid), new LongWritable(msec));
+				// if (++mapcount % 1000 == 0)
+				// 	System.err.print(".");
+			}
+			catch (Exception ex) {
+				// log.error("exception in map: " + ex);
+			}
+		}
+		*/
+
+		public void map(LongWritable key,
+										Text rec,
+										OutputCollector<LongWritable, LongWritable> output,
+										Reporter reporter
+										) throws IOException {
+
+			try {
+				String line = rec.toString();
 				Matcher matcher = pat.matcher(line);
 				if (!matcher.matches() || 7 != matcher.groupCount()) {
 					throw new RuntimeException("match failed on: " + line);
@@ -128,7 +156,7 @@ public class SessionRollup extends Configured implements Tool {
 
 		binName = AerospikeConfigUtil.getInputBinName(job);
 
-		job.setInputFormat(AerospikeInputFormat.class);
+		// job.setInputFormat(AerospikeInputFormat.class);
 
 		job.setMapperClass(Map.class);
 		job.setMapOutputKeyClass(LongWritable.class);
@@ -139,7 +167,11 @@ public class SessionRollup extends Configured implements Tool {
 		job.setOutputValueClass(IntWritable.class);
 		job.setOutputFormat(TextOutputFormat.class);
 
-		FileOutputFormat.setOutputPath(job, new Path(args[0]));
+    for (int ii = 0; ii < args.length - 1; ++ii) {
+      FileInputFormat.addInputPath(job, new Path(args[ii]));
+    }
+
+		FileOutputFormat.setOutputPath(job, new Path(args[args.length - 1]));
 
 		JobClient.runJob(job);
 

@@ -141,6 +141,8 @@ Running Input Examples
         -D aerospike.input.setname=logrecs \
         -D aerospike.input.binname=bin1 \
         -D aerospike.input.operation=scan \
+        /tmp/wc_day52_1.log \
+        /tmp/wc_day52_2.log \
         /tmp/output
 
     # Inspect the results.
@@ -193,3 +195,22 @@ Running Output Examples
 
     # Stop HDFS
     $HADOOP_PREFIX/sbin/stop-dfs.sh
+
+
+----------------------------------------------------------------
+
+     # Load the test words into HDFS.
+    $HADOOP_PREFIX/bin/hdfs dfs -mkdir /tmp
+    $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/wc_day52_1.log
+    $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/wc_day52_2.log
+    $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal ~ksedgwic/aerospike/doc/data/WorldCup/wc_day52_1.log /tmp/wc_day52_1.log
+    $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal ~ksedgwic/aerospike/doc/data/WorldCup/wc_day52_2.log /tmp/wc_day52_2.log
+
+    # Run the session_rollup example (Old Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/session_rollup/build/libs/session_rollup.jar \
+        /tmp/wc_day52_1.log \
+        /tmp/wc_day52_2.log \
+        /tmp/output
