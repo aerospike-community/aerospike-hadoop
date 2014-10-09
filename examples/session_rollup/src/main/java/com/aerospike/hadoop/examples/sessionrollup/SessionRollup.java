@@ -21,6 +21,12 @@ package com.aerospike.hadoop.examples.sessionrollup;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,41 +50,70 @@ import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TextOutputFormat;
 
+import com.aerospike.hadoop.mapreduce.AerospikeConfigUtil;
 import com.aerospike.hadoop.mapreduce.AerospikeInputFormat;
-import com.aerospike.hadoop.mapreduce.AerospikeTextInputFormat;
+import com.aerospike.hadoop.mapreduce.AerospikeKey;
+import com.aerospike.hadoop.mapreduce.AerospikeRecord;
 
 public class SessionRollup extends Configured implements Tool {
 
 	private static final Log log = LogFactory.getLog(SessionRollup.class);
 
-	public static class Map extends MapReduceBase implements
-			Mapper<LongWritable, Text, Text, IntWritable> {
-		private final static IntWritable one = new IntWritable(1);
-		private Text word = new Text();
+	private static String binName;
 
-		public void map(LongWritable key, Text value,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
-				throws IOException {
-			String line = value.toString();
-			StringTokenizer tokenizer = new StringTokenizer(line);
-			while (tokenizer.hasMoreTokens()) {
-				word.set(tokenizer.nextToken());
-				output.collect(word, one);
+	public static class Map extends MapReduceBase implements
+			Mapper<AerospikeKey, AerospikeRecord, LongWritable, LongWritable> {
+
+		// Sample line format:
+		// 37518 - - [16/Jun/1998:02:48:36 +0000] "GET /images/hm_hola.gif HTTP/1.0" 200 2240
+
+    String logEntryRegex = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+)";
+		Pattern pat = Pattern.compile(logEntryRegex);
+
+		DateTimeFormatter dateTimeParser =
+			DateTimeFormat.forPattern("dd/MMM/yyyy:HH:mm:ss Z");
+
+		int mapcount = 0;
+
+		public void map(AerospikeKey key,
+										AerospikeRecord rec,
+										OutputCollector<LongWritable, LongWritable> output,
+										Reporter reporter
+										) throws IOException {
+
+			try {
+				String line = rec.bins.get(binName).toString();
+				Matcher matcher = pat.matcher(line);
+				if (!matcher.matches() || 7 != matcher.groupCount()) {
+					throw new RuntimeException("match failed on: " + line);
+				}
+				long userid = Long.parseLong(matcher.group(1));
+				String tstamp = matcher.group(4);
+				DateTime datetime = dateTimeParser.parseDateTime(tstamp);
+				long msec = datetime.toInstant().getMillis();
+				output.collect(new LongWritable(userid), new LongWritable(msec));
+				// if (++mapcount % 1000 == 0)
+				// 	System.err.print(".");
+			}
+			catch (Exception ex) {
+				// log.error("exception in map: " + ex);
 			}
 		}
 	}
 
-	public static class Reduce extends MapReduceBase implements
-			Reducer<Text, IntWritable, Text, IntWritable> {
+	public static class Reduce
+		extends MapReduceBase
+		implements Reducer<LongWritable, LongWritable, LongWritable, IntWritable> {
 				
-		public void reduce(Text key, Iterator<IntWritable> values,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
-				throws IOException {
-			int sum = 0;
-			while (values.hasNext()) {
-				sum += values.next().get();
-			}
-			output.collect(key, new IntWritable(sum));
+		public void reduce(LongWritable userid,
+											 Iterator<LongWritable> tstamps,
+											 OutputCollector<LongWritable, IntWritable> output,
+											 Reporter reporter
+											 ) throws IOException {
+			int count = 0;
+			while (tstamps.hasNext())
+				++count;
+			output.collect(userid, new IntWritable(count));
 		}
 	}
 
@@ -91,11 +126,16 @@ public class SessionRollup extends Configured implements Tool {
 		JobConf job = new JobConf(conf, SessionRollup.class);
 		job.setJobName("AerospikeSessionRollup");
 
-		job.setInputFormat(AerospikeTextInputFormat.class);
+		binName = AerospikeConfigUtil.getInputBinName(job);
+
+		job.setInputFormat(AerospikeInputFormat.class);
+
 		job.setMapperClass(Map.class);
+		job.setMapOutputKeyClass(LongWritable.class);
+		job.setMapOutputValueClass(LongWritable.class);
 		job.setCombinerClass(Reduce.class);
 		job.setReducerClass(Reduce.class);
-		job.setOutputKeyClass(Text.class);
+		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(IntWritable.class);
 		job.setOutputFormat(TextOutputFormat.class);
 

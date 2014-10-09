@@ -19,7 +19,7 @@
 package com.aerospike.hadoop.mapreduce;
 
 import java.io.IOException;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -64,8 +64,8 @@ public class AerospikeRecordReader
 	private ASSCanReader scanReader = null;
 	private ASQueryReader queryReader = null;
 
-	private LinkedBlockingQueue<KeyRecPair> queue = 
-		new LinkedBlockingQueue<KeyRecPair>();
+	private ArrayBlockingQueue<KeyRecPair> queue = 
+		new ArrayBlockingQueue<KeyRecPair>(16 * 1024);
 
 	private boolean isFinished = false;
 	private boolean isError = false;
@@ -123,6 +123,7 @@ public class AerospikeRecordReader
 				}
 			}
 			catch (Exception ex) {
+				log.error("exception in ASSCanReader.run: " + ex);
 				isError = true;
 				return;
 			}
@@ -263,6 +264,32 @@ public class AerospikeRecordReader
 		return oldApiVal;
 	}
 
+	/*
+	public synchronized boolean next(AerospikeKey key, AerospikeRecord value)
+		throws IOException {
+
+		try {
+			if (isError)
+				return false;
+
+			if (isFinished && queue.size() == 0)
+				return false;
+
+			KeyRecPair pair = queue.take();
+		
+			// log.info("key=" + pair.key + ", val=" + pair.rec);
+
+			currentKey = setCurrentKey(currentKey, key, pair.key);
+			currentValue = setCurrentValue(currentValue, value, pair.rec);
+
+			return true;
+		}
+		catch (Exception ex) {
+			throw new IOException("exception in AerospikeRecordReader.next", ex);
+		}
+	}
+	*/
+
 	public synchronized boolean next(AerospikeKey key, AerospikeRecord value)
 		throws IOException {
 
@@ -300,9 +327,9 @@ public class AerospikeRecordReader
 
 			currentKey = setCurrentKey(currentKey, key, pair.key);
 			currentValue = setCurrentValue(currentValue, value, pair.rec);
-
 		}
 		catch (Exception ex) {
+			log.error("exception in AerospikeRecordReader.next: " + ex);
 			throw new IOException("exception in AerospikeRecordReader.next", ex);
 		}
 		return true;

@@ -130,6 +130,19 @@ Running Input Examples
         -D aerospike.input.numrange.end=200 \
         /tmp/output
 
+    # -- OR --
+
+    # Run the session_rollup example (Old Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/session_rollup/build/libs/session_rollup.jar \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=logrecs \
+        -D aerospike.input.binname=bin1 \
+        -D aerospike.input.operation=scan \
+        /tmp/output
+
     # Inspect the results.
     $HADOOP_PREFIX/bin/hadoop fs -ls /tmp/output
     rm -rf /tmp/output
