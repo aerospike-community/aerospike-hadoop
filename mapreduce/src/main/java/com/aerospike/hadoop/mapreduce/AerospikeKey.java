@@ -30,14 +30,32 @@ import com.aerospike.client.Value;
 import com.aerospike.client.util.Packer;
 import com.aerospike.client.util.Unpacker.ObjectUnpacker;
 
-public class AerospikeKey	extends Key	implements WritableComparable {
+public class AerospikeKey	implements WritableComparable {
+
+	public String namespace;
+	public String setName;
+	public byte[] digest;
+	public Value userKey;
 
 	public AerospikeKey() {
-		super(null, null, null, null);
+		this.namespace = null;
+		this.setName = null;
+		this.digest = null;
+		this.userKey = null;
 	}
 
 	public AerospikeKey(Key key) {
-		super(key.namespace, key.digest, key.setName, key.userKey);
+		this.namespace = key.namespace;
+		this.digest = key.digest;
+		this.setName = key.setName;
+		this.userKey = key.userKey;
+	}
+
+	public AerospikeKey(AerospikeKey key) {
+		this.namespace = key.namespace;
+		this.digest = key.digest;
+		this.setName = key.setName;
+		this.userKey = key.userKey;
 	}
 
 	public void set(Key key) {
@@ -45,6 +63,17 @@ public class AerospikeKey	extends Key	implements WritableComparable {
 		this.digest = key.digest;
 		this.setName = key.setName;
 		this.userKey = key.userKey;
+	}
+
+	public void set(AerospikeKey key) {
+		this.namespace = key.namespace;
+		this.digest = key.digest;
+		this.setName = key.setName;
+		this.userKey = key.userKey;
+	}
+
+	public Key toKey() {
+		return new Key(namespace, digest, setName, userKey);
 	}
 
 	public void write(DataOutput out) throws IOException {
@@ -63,7 +92,6 @@ public class AerospikeKey	extends Key	implements WritableComparable {
 				byte[] buff = pack.toByteArray();
 				out.writeInt(buff.length);
 				out.write(buff);
-				
 			}
 		}
 		catch (Exception ex) {
