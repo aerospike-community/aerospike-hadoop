@@ -185,8 +185,6 @@ Running Output Examples
         ./examples/word_count_output/build/libs/word_count_output.jar \
         -D aerospike.output.namespace=test \
         -D aerospike.output.setname=counts \
-        -D aerospike.output.binname=value \
-        -D aerospike.output.keyname=key \
         /tmp/words
 
     # Inspect the results:

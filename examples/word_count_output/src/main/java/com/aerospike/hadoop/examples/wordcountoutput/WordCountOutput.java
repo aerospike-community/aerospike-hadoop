@@ -102,14 +102,15 @@ public class WordCountOutput extends Configured implements Tool {
 			}
 
 			@Override
-			public void writeAerospike(Text key, IntWritable value,
-																 AerospikeClient client, WritePolicy writePolicy,
-																 String namespace, String setName,
-																 String binName, String keyName
-																 ) throws IOException {
+			public void writeAerospike(Text key,
+																 IntWritable value,
+																 AerospikeClient client,
+																 WritePolicy writePolicy,
+																 String namespace,
+																 String setName) throws IOException {
 				Key kk = new Key(namespace, setName, key.toString());
-				Bin bin1 = new Bin(keyName, key.toString());
-				Bin bin2 = new Bin(binName, value.get());
+				Bin bin1 = new Bin("word", key.toString());
+				Bin bin2 = new Bin("count", value.get());
 				client.put(writePolicy, kk, bin1, bin2);
 			}
 		}

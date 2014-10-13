@@ -5,6 +5,8 @@ General
 
 * Add maven build support.
 
+* Hook up the Reporter interface.
+
 * Generate better intsum example w/ Chris.  Use eBay advertiser/campaign data.
 
 * Investigate using multiple client "slices" to process InputFormats;

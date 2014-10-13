@@ -45,8 +45,6 @@ public abstract class AerospikeRecordWriter<KK, VV>
 
 	private static String namespace;
 	private static String setName;
-	private static String binName;
-	private static String keyName;
 	private static AerospikeClient client;
 	private static WritePolicy writePolicy;
 
@@ -62,9 +60,7 @@ public abstract class AerospikeRecordWriter<KK, VV>
 																			AerospikeClient client,
 																			WritePolicy writePolicy,
 																			String namespace,
-																			String setName,
-																			String binName,
-																			String keyName) throws IOException;
+																			String setName) throws IOException;
 
 	@Override
 	public void write(KK key, VV value) throws IOException {
@@ -73,8 +69,7 @@ public abstract class AerospikeRecordWriter<KK, VV>
 			init();
 		}
 
-		writeAerospike(key, value, client, writePolicy,
-									 namespace, setName, binName, keyName);
+		writeAerospike(key, value, client, writePolicy, namespace, setName);
 	}
 
 	protected void init() throws IOException {
@@ -84,11 +79,8 @@ public abstract class AerospikeRecordWriter<KK, VV>
 
 		namespace = AerospikeConfigUtil.getOutputNamespace(cfg);
 		setName = AerospikeConfigUtil.getOutputSetName(cfg);
-		binName = AerospikeConfigUtil.getOutputBinName(cfg);
-		keyName = AerospikeConfigUtil.getOutputKeyName(cfg);
 
-		log.info(String.format("init: %s %d %s %s %s %s",
-													 host, port, namespace, setName, binName, keyName));
+		log.info(String.format("init: %s %d %s %s", host, port, namespace, setName));
 
 		ClientPolicy policy = new ClientPolicy();
 		policy.user = "";
