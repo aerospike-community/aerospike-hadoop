@@ -211,8 +211,8 @@ Running Output Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/session_rollup/build/libs/session_rollup.jar \
-        /tmp/wc_day52_1.log \
-        /tmp/wc_day52_2.log \
+        -Dmapred.reduce.tasks=30 \
+	`cat WORLDCUP_FILELIST` \
         /tmp/output
 
     # Run the session_rollup example (Old Hadoop API)
