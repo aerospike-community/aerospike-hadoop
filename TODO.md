@@ -3,6 +3,8 @@ General
 
 * Figure out how to implement splits.
 
+* Add maven build support.
+
 * Generate better intsum example w/ Chris.  Use eBay advertiser/campaign data.
 
 * Investigate using multiple client "slices" to process InputFormats;
@@ -18,9 +20,5 @@ General
 
 Session Rollup
 ----------------------------------------------------------------
-
-* Break hits into sessions per IP.
-
-* Compute start/stop/nhits for each session.
 
 * Configure as HDFS -> MR -> Aerospike.

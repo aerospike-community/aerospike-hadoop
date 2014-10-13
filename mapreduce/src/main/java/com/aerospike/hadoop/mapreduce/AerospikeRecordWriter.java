@@ -57,7 +57,7 @@ public abstract class AerospikeRecordWriter<KK, VV>
 		this.progressable = progressable;
 	}
 
-	public abstract	void writeAerospike(KK key,
+	public abstract void writeAerospike(KK key,
 																			VV value,
 																			AerospikeClient client,
 																			WritePolicy writePolicy,
