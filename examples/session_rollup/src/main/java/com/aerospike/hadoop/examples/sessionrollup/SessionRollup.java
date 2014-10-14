@@ -18,6 +18,8 @@
 
 package com.aerospike.hadoop.examples.sessionrollup;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,10 +40,11 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.GenericOptionsParser;
+import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -52,14 +55,19 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.MapReduceBase;
 import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TextOutputFormat;
 
-import com.aerospike.hadoop.mapreduce.AerospikeConfigUtil;
-import com.aerospike.hadoop.mapreduce.AerospikeInputFormat;
-import com.aerospike.hadoop.mapreduce.AerospikeKey;
-import com.aerospike.hadoop.mapreduce.AerospikeRecord;
+import com.aerospike.client.AerospikeClient;
+import com.aerospike.client.Bin;
+import com.aerospike.client.Key;
+import com.aerospike.client.policy.ClientPolicy;
+import com.aerospike.client.policy.WritePolicy;
+
+import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
+import com.aerospike.hadoop.mapreduce.AerospikeRecordWriter;
 
 public class SessionRollup extends Configured implements Tool {
 
@@ -107,13 +115,41 @@ public class SessionRollup extends Configured implements Tool {
 		}
 	}
 
+	private static class Session implements Writable {
+		public long userid;
+		public long start;
+		public long end;
+		public int nhits;
+
+		public Session(long userid, long start, long end, int nhits) {
+			this.userid = userid;
+			this.start = start;
+			this.end = end;
+			this.nhits = nhits;
+		}
+
+		public void readFields(DataInput in) throws IOException {
+			userid = in.readLong();
+			start = in.readLong();
+			end = in.readLong();
+			nhits = in.readInt();
+		}
+
+		public void write(DataOutput out) throws IOException {
+			out.writeLong(userid);
+			out.writeLong(start);
+			out.writeLong(end);
+			out.writeInt(nhits);
+		}
+	}
+
 	public static class Reduce
 		extends MapReduceBase
-		implements Reducer<LongWritable, LongWritable, Text, Text> {
+		implements Reducer<LongWritable, LongWritable, Text, Session> {
 				
 		public void reduce(LongWritable userid,
 											 Iterator<LongWritable> tstamps,
-											 OutputCollector<Text, Text> output,
+											 OutputCollector<Text, Session> output,
 											 Reporter reporter
 											 ) throws IOException {
 
@@ -164,16 +200,43 @@ public class SessionRollup extends Configured implements Tool {
 		}
 
 		private void collect_session(long userid, long start, long end, int nhits,
-																 OutputCollector<Text, Text> output
+																 OutputCollector<Text, Session> output
 																 ) throws IOException {
-			JSONObject sessobj = new JSONObject();
-			sessobj.put("userid", userid);
-			sessobj.put("start", start);
-			sessobj.put("end", end);
-			sessobj.put("nhits", nhits);
 			String sessid = UUID.randomUUID().toString();
-			String sessjson = sessobj.toString();
-			output.collect(new Text(sessid), new Text(sessjson));
+			Session session = new Session(userid, start, end, nhits);
+			output.collect(new Text(sessid), session);
+		}
+	}
+
+	public static class SessionOutputFormat
+		extends AerospikeOutputFormat<Text, Session> {
+
+		public static class SessionRecordWriter
+			extends AerospikeRecordWriter<Text, Session> {
+
+			public SessionRecordWriter(Configuration cfg, Progressable progressable) {
+				super(cfg, progressable);
+			}
+
+			@Override
+			public void writeAerospike(Text sessid,
+																 Session session,
+																 AerospikeClient client,
+																 WritePolicy writePolicy,
+																 String namespace,
+																 String setName) throws IOException {
+				Key kk = new Key(namespace, setName, sessid.toString());
+				Bin bin0 = new Bin("userid", session.userid);
+				Bin bin1 = new Bin("start", session.start);
+				Bin bin2 = new Bin("end", session.end);
+				Bin bin3 = new Bin("nhits", session.nhits);
+				client.put(writePolicy, kk, bin0, bin1, bin2, bin3);
+			}
+		}
+
+		public RecordWriter<Text, Session>
+			        getAerospikeRecordWriter(Configuration conf, Progressable prog) {
+			return new SessionRecordWriter(conf, prog);
 		}
 	}
 
@@ -191,15 +254,13 @@ public class SessionRollup extends Configured implements Tool {
 		job.setMapOutputValueClass(LongWritable.class);
 		// job.setCombinerClass(Reduce.class);  // Reduce changes format.
 		job.setReducerClass(Reduce.class);
-		job.setOutputKeyClass(LongWritable.class);
-		job.setOutputValueClass(Text.class);
-		job.setOutputFormat(TextOutputFormat.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Session.class);
 
-		for (int ii = 0; ii < args.length - 1; ++ii) {
+		job.setOutputFormat(SessionOutputFormat.class);
+
+		for (int ii = 0; ii < args.length; ++ii)
 			FileInputFormat.addInputPath(job, new Path(args[ii]));
-		}
-
-		FileOutputFormat.setOutputPath(job, new Path(args[args.length - 1]));
 
 		JobClient.runJob(job);
 

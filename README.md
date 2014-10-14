@@ -195,6 +195,7 @@ Running Output Examples
     $HADOOP_PREFIX/sbin/stop-dfs.sh
 
 
+Running the Session Rollup Example
 ----------------------------------------------------------------
 
      # Load the test words into HDFS.
@@ -203,6 +204,27 @@ Running Output Examples
     $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/wc_day52_2.log
     $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal ~ksedgwic/aerospike/doc/data/WorldCup/wc_day52_1.log /tmp/wc_day52_1.log
     $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal ~ksedgwic/aerospike/doc/data/WorldCup/wc_day52_2.log /tmp/wc_day52_2.log
+
+    # Create the secondary indexes.
+    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
+        -c 'CREATE INDEX useridndx ON test.sessions (userid) NUMERIC'
+    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
+        -c 'CREATE INDEX startndx ON test.sessions (start) NUMERIC'
+
+    # Run the session_rollup example (Old Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/session_rollup/build/libs/session_rollup.jar \
+        -D aerospike.output.namespace=test \
+        -D aerospike.output.setname=sessions \
+        -D mapred.reduce.tasks=30 \
+        /tmp/wc_day52_1.log \
+        /tmp/wc_day52_2.log
+
+    # Inspect the results:
+    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
+        -c 'SELECT * FROM test.sessions'
 
     # Run the session_rollup example (Old Hadoop API)
     $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
