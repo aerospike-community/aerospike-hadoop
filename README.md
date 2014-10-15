@@ -25,6 +25,7 @@ Building
     # Build the example programs.
     ./gradlew :examples:word_count_input:installApp
     ./gradlew :examples:int_sum_input:installApp
+    ./gradlew :examples:aggregate_int_input:installApp
     ./gradlew :examples:word_count_output:installApp
     ./gradlew :examples:session_rollup:installApp
 
@@ -56,11 +57,11 @@ Setup Sample Data
                     'text-file', \
                     '/tmp/input']"
 
-    # Generates sequential integers for int_sum_input demo.
+    # Generates sequential integers for aggregate_int_input demo.
     ./gradlew sampledata:run \
         -PappArgs="['localhost:3000:test:integers:bin1', \
                     'seq-int', \
-                    '10000']"
+                    '100000']"
 
     # Load log files for the session_rollup demo.
     ./gradlew sampledata:run \
@@ -122,6 +123,34 @@ Running Input Examples
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/int_sum_input/build/libs/int_sum_input.jar \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=integers \
+        -D aerospike.input.binname=bin1 \
+        -D aerospike.input.operation=numrange \
+        -D aerospike.input.numrange.begin=100 \
+        -D aerospike.input.numrange.end=200 \
+        /tmp/output
+
+    # -- OR --
+
+    # Run the aggregate_int_input range example (New Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/aggregate_int_input/build/libs/aggregate_int_input.jar \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=integers \
+        -D aerospike.input.binname=bin1 \
+        -D aerospike.input.operation=scan \
+        /tmp/output
+
+    # -- OR --
+
+    # Run the aggregate_int_input range example (New Hadoop API)
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/aggregate_int_input/build/libs/aggregate_int_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
         -D aerospike.input.binname=bin1 \

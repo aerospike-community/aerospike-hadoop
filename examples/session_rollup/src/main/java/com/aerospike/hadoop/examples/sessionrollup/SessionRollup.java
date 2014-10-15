@@ -29,8 +29,6 @@ import java.util.regex.Pattern;
 import java.util.StringTokenizer;
 import java.util.UUID;
 
-import org.json.JSONObject;
-
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;

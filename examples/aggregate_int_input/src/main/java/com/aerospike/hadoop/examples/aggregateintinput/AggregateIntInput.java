@@ -16,7 +16,7 @@
  * permissions and limitations under the License.
  */
 
-package com.aerospike.hadoop.examples.intsuminput;
+package com.aerospike.hadoop.examples.aggregateintinput;
 
 import java.io.IOException;
 import java.util.StringTokenizer;
@@ -29,6 +29,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -41,39 +42,53 @@ import com.aerospike.hadoop.mapreduce.AerospikeInputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeKey;
 import com.aerospike.hadoop.mapreduce.AerospikeRecord;
 
-public class IntSumInput extends Configured implements Tool {
+public class AggregateIntInput extends Configured implements Tool {
 
-	private static final Log log = LogFactory.getLog(IntSumInput.class);
+	private static final Log log = LogFactory.getLog(AggregateIntInput.class);
+
+	private static final int KK = 3163;
 
 	private static String binName;
 
-  public static class Map 
-		extends Mapper<AerospikeKey, AerospikeRecord, IntWritable, LongWritable> {
-    
-    private final static IntWritable one = new IntWritable(1);
+  public static class Map
+		extends Mapper<AerospikeKey, AerospikeRecord, LongWritable, LongWritable> {
+
 		private LongWritable val = new LongWritable();
+		private LongWritable mod = new LongWritable();
       
-    public void map(AerospikeKey key, AerospikeRecord rec, Context context)
-			throws IOException, InterruptedException {
-			val.set(new Long((Integer) rec.bins.get(binName)));
-			context.write(one, val);
+    public void map(AerospikeKey key, AerospikeRecord rec, Context context
+										) throws IOException, InterruptedException {
+			int vv = (Integer) rec.bins.get(binName);
+			val.set(vv);
+			mod.set(vv % KK);
+			context.write(mod, val);
     }
   }
-  
+
   public static class Reduce
-		extends Reducer<IntWritable,LongWritable,IntWritable,LongWritable> {
+		extends Reducer<LongWritable, LongWritable, LongWritable, Text> {
 
-    private LongWritable result = new LongWritable();
-
-    public void reduce(IntWritable key, Iterable<LongWritable> values, 
+    public void reduce(LongWritable mod,
+											 Iterable<LongWritable> values,
                        Context context
                        ) throws IOException, InterruptedException {
-			long sum = 0;
+
+			long num = 0;	// number of elements
+			long sum = 0;	// sum of elements
+			long min = Long.MAX_VALUE;	// minimum element
+			long max = Long.MIN_VALUE;	// maximum element
+
 			for (LongWritable val : values) {
-				sum += val.get();
+				long vv = val.get();
+				num += 1;
+				sum += vv;
+				if (vv < min) min = vv;
+				if (vv > max) max = vv;
 			}
-      result.set(sum);
-      context.write(key, result);
+
+			String rec = String.format("%d %d %d %d", num, min, max, sum);
+
+      context.write(mod, new Text(rec));
     }
   }
 
@@ -81,21 +96,21 @@ public class IntSumInput extends Configured implements Tool {
 		final Configuration conf = getConf();
 
 		@SuppressWarnings("deprecation")
-		final Job job = new Job(conf, "AerospikeIntSumInput");
+		final Job job = new Job(conf, "AerospikeAggregateIntInput");
 
 		binName = AerospikeConfigUtil.getInputBinName(conf);
 
 		log.info("run starting");
 
-    job.setJarByClass(IntSumInput.class);
+    job.setJarByClass(AggregateIntInput.class);
     job.setInputFormatClass(AerospikeInputFormat.class);
     job.setMapperClass(Map.class);
-		job.setMapOutputKeyClass(IntWritable.class);
+		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(LongWritable.class);
-    job.setCombinerClass(Reduce.class);
+    // job.setCombinerClass(Reduce.class); // no combiner
     job.setReducerClass(Reduce.class);
-    job.setOutputKeyClass(IntWritable.class);
-    job.setOutputValueClass(LongWritable.class);
+    job.setOutputKeyClass(LongWritable.class);
+    job.setOutputValueClass(Text.class);
 
 		FileOutputFormat.setOutputPath(job, new Path(args[0]));
 
@@ -105,6 +120,6 @@ public class IntSumInput extends Configured implements Tool {
 	}
 
 	public static void main(final String[] args) throws Exception {
-		System.exit(ToolRunner.run(new IntSumInput(), args));
+		System.exit(ToolRunner.run(new AggregateIntInput(), args));
 	}
 }
