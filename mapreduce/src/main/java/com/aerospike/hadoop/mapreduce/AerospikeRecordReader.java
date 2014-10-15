@@ -35,6 +35,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.AerospikeException;
+import com.aerospike.client.AerospikeException.ScanTerminated;
 import com.aerospike.client.Key;
 import com.aerospike.client.policy.QueryPolicy;
 import com.aerospike.client.policy.ScanPolicy;
@@ -84,7 +85,7 @@ public class AerospikeRecordReader
 				queue.put(new KeyRecPair(new AerospikeKey(key),
 																 new AerospikeRecord(record)));
 			} catch (Exception ex) {
-				throw new AerospikeException("exception in queue.put", ex);
+				throw new ScanTerminated(ex);
 			}
 		}
 	}
