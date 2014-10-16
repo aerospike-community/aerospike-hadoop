@@ -34,9 +34,9 @@ public class AerospikeConfigUtil {
 	public static final int DEFAULT_INPUT_PORT = 3000;
 	public static final String INPUT_NAMESPACE = "aerospike.input.namespace";
 	public static final String INPUT_SETNAME = "aerospike.input.setname";
-	public static final String INPUT_BINNAME = "aerospike.input.binname";
 	public static final String INPUT_OPERATION = "aerospike.input.operation";
 	public static final String DEFAULT_INPUT_OPERATION = "scan";
+	public static final String INPUT_NUMRANGE_BIN = "aerospike.input.numrange.bin";
 	public static final String INPUT_NUMRANGE_BEGIN = "aerospike.input.numrange.begin";
 	public static final String INPUT_NUMRANGE_END = "aerospike.input.numrange.end";
 	public static final long INVALID_LONG = 762492121482318889L;
@@ -100,17 +100,6 @@ public class AerospikeConfigUtil {
 		return setname;
 	}
 
-	public static void setInputBinName(Configuration conf, String binname) {
-		log.info("setting " + INPUT_BINNAME + " to " + binname);
-		conf.set(INPUT_BINNAME, binname);
-	}
-
-	public static String getInputBinName(Configuration conf) {
-		String binname = conf.get(INPUT_BINNAME);
-		log.info("using " + INPUT_BINNAME + " = " + binname);
-		return binname;
-	}
-
 	public static void setInputOperation(Configuration conf, String operation) {
 		if (!operation.equals("scan") &&
 				!operation.equals("numrange"))
@@ -126,6 +115,17 @@ public class AerospikeConfigUtil {
 			throw new UnsupportedOperationException("input operation must be 'scan' or 'numrange'");
 		log.info("using " + INPUT_OPERATION + " = " + operation);
 		return operation;
+	}
+
+	public static void setInputNumRangeBin(Configuration conf, String binname) {
+		log.info("setting " + INPUT_NUMRANGE_BIN + " to " + binname);
+		conf.set(INPUT_NUMRANGE_BIN, binname);
+	}
+
+	public static String getInputNumRangeBin(Configuration conf) {
+		String binname = conf.get(INPUT_NUMRANGE_BIN);
+		log.info("using " + INPUT_NUMRANGE_BIN + " = " + binname);
+		return binname;
 	}
 
 	public static void setInputNumRangeBegin(Configuration conf, long begin) {

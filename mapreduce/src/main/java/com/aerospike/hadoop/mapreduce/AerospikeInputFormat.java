@@ -84,16 +84,18 @@ public class AerospikeInputFormat
 			int port = AerospikeConfigUtil.getInputPort(job);
 			String namespace = AerospikeConfigUtil.getInputNamespace(job);
 			String setName = AerospikeConfigUtil.getInputSetName(job);
-			String binName = AerospikeConfigUtil.getInputBinName(job);
+			String numrangeBin = "";
 			long numrangeBegin = 0;
 			long numrangeEnd = 0;
 			if (oper.equals("numrange")) {
+				numrangeBin = AerospikeConfigUtil.getInputNumRangeBin(job);
 				numrangeBegin = AerospikeConfigUtil.getInputNumRangeBegin(job);
 				numrangeEnd = AerospikeConfigUtil.getInputNumRangeEnd(job);
 			}
 			
-			log.info(String.format("using: %s %d %s %s %s",
-														 host, port, namespace, setName, binName));
+			log.info(String.format("using: %s %d %s %s",
+														 host, port, namespace, setName));
+
 			AerospikeClient client = new AerospikeClient(host, port);
 			try {
 				Node[] nodes = client.getNodes();
@@ -109,7 +111,7 @@ public class AerospikeInputFormat
 					Host nodehost = node.getHost();
 					splits[ii] = new AerospikeSplit(oper, nodeName,
 																					nodehost.name, nodehost.port,
-																					namespace, setName, binName,
+																					namespace, setName, numrangeBin,
 																					numrangeBegin, numrangeEnd);
 					log.info("split: " + node);
 				}

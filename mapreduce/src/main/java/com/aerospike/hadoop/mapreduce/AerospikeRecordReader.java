@@ -71,7 +71,7 @@ public class AerospikeRecordReader
 	private boolean isFinished = false;
 	private boolean isError = false;
 	private boolean isRunning = false;
-	private String binName;
+	private String numrangeBin;
 	private long numrangeBegin;
 	private long numrangeEnd;
 	
@@ -138,19 +138,19 @@ public class AerospikeRecordReader
 		int port;
 		String namespace;
 		String setName;
-		String binName;
+		String numrangeBin;
 		long numrangeBegin;
 		long numrangeEnd;
 
 		ASQueryReader(String node, String host, int port,
-						String ns, String setName, String binName,
+						String ns, String setName, String numrangeBin,
 						long numrangeBegin, long numrangeEnd) {
 			this.node = node;
 			this.host = host;
 			this.port = port;
 			this.namespace = ns;
 			this.setName = setName;
-			this.binName = binName;
+			this.numrangeBin = numrangeBin;
 			this.numrangeBegin = numrangeBegin;
 			this.numrangeEnd = numrangeEnd;
 		}
@@ -162,10 +162,10 @@ public class AerospikeRecordReader
 					Statement stmt = new Statement();
 					stmt.setNamespace(namespace);
 					stmt.setSetName(setName);
-					stmt.setFilters(Filter.range(binName, numrangeBegin, numrangeEnd));
+					stmt.setFilters(Filter.range(numrangeBin, numrangeBegin, numrangeEnd));
 					log.info(String.format("range %s %d %d",
-																 binName, numrangeBegin, numrangeEnd));
-					stmt.setBinNames(binName);
+																 numrangeBin, numrangeBegin, numrangeEnd));
+					stmt.setBinNames(numrangeBin);
 					QueryPolicy queryPolicy = new QueryPolicy();
 					RecordSet rs = client.query(queryPolicy, stmt);
 					isRunning = true;
@@ -214,7 +214,7 @@ public class AerospikeRecordReader
 		final int port = split.getPort();
 		final String namespace = split.getNameSpace();
 		final String setName = split.getSetName();
-		this.binName = split.getBinName();
+		this.numrangeBin = split.getNumRangeBin();
 		this.numrangeBegin = split.getNumRangeBegin();
 		this.numrangeEnd = split.getNumRangeEnd();
 
@@ -223,7 +223,7 @@ public class AerospikeRecordReader
 			scanReader.start();
 		} else if (type.equals("numrange")) {
 			queryReader = new ASQueryReader(node, host, port, namespace, setName,
-																			binName, numrangeBegin, numrangeEnd);
+																			numrangeBin, numrangeBegin, numrangeEnd);
 			queryReader.start();
 		}
 

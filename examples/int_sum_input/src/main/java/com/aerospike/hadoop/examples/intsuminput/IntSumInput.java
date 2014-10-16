@@ -45,7 +45,7 @@ public class IntSumInput extends Configured implements Tool {
 
 	private static final Log log = LogFactory.getLog(IntSumInput.class);
 
-	private static String binName;
+	private static String binName = "bin1";
 
   public static class Map 
 		extends Mapper<AerospikeKey, AerospikeRecord, IntWritable, LongWritable> {
@@ -82,8 +82,6 @@ public class IntSumInput extends Configured implements Tool {
 
 		@SuppressWarnings("deprecation")
 		final Job job = new Job(conf, "AerospikeIntSumInput");
-
-		binName = AerospikeConfigUtil.getInputBinName(conf);
 
 		log.info("run starting");
 

@@ -54,7 +54,7 @@ public class WordCountInput extends Configured implements Tool {
 
 	private static final Log log = LogFactory.getLog(WordCountInput.class);
 
-	private static String binName;
+	private static String binName = "bin1";
 
 	public static class Map extends MapReduceBase implements
 			Mapper<AerospikeKey, AerospikeRecord, Text, IntWritable> {
@@ -98,8 +98,6 @@ public class WordCountInput extends Configured implements Tool {
 
 		JobConf job = new JobConf(conf, WordCountInput.class);
 		job.setJobName("AerospikeWordCountInput");
-
-		binName = AerospikeConfigUtil.getInputBinName(job);
 
 		job.setInputFormat(AerospikeInputFormat.class);
 		job.setMapperClass(Map.class);

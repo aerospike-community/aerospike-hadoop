@@ -71,8 +71,6 @@ public class SessionRollup extends Configured implements Tool {
 
 	private static final Log log = LogFactory.getLog(SessionRollup.class);
 
-	private static String binName;
-
 	private static final long SESSION_GAP_MSEC = 20 * 60 * 1000;
 
 	public static class Map extends MapReduceBase implements

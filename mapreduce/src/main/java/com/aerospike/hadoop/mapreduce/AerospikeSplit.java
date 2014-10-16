@@ -36,7 +36,7 @@ public class AerospikeSplit
 	private int port;
 	private String namespace;
 	private String setName;
-	private String binName;
+	private String numrangeBin;
 	private long numrangeBegin;
 	private long numrangeEnd;
 
@@ -44,7 +44,7 @@ public class AerospikeSplit
 	}
 
 	public AerospikeSplit(String type, String node, String host, int port,
-												String ns, String setName, String binName,
+												String ns, String setName, String numrangeBin,
 												long numrangeBegin, long numrangeEnd) {
 		this.type = type;
 		this.node = node;
@@ -52,7 +52,7 @@ public class AerospikeSplit
 		this.port = port;
 		this.namespace = ns;
 		this.setName = setName;
-		this.binName = binName;
+		this.numrangeBin = numrangeBin;
 		this.numrangeBegin = numrangeBegin;
 		this.numrangeEnd = numrangeEnd;
 	}
@@ -81,8 +81,8 @@ public class AerospikeSplit
 		return setName;
 	}
 
-	public String getBinName() {
-		return binName;
+	public String getNumRangeBin() {
+		return numrangeBin;
 	}
 
 	public long getNumRangeBegin() {
@@ -99,7 +99,7 @@ public class AerospikeSplit
 
 	public String toString() {
 		return type + ':' + node + ":" + host + ":" + port + ":"
-			+ namespace + ":" + setName + ":" + binName;
+			+ namespace + ":" + setName;
 	}
 
 	public void write(DataOutput out) throws IOException {
@@ -109,7 +109,7 @@ public class AerospikeSplit
 		out.writeInt(port);
 		Text.writeString(out, namespace);
 		Text.writeString(out, setName);
-		Text.writeString(out, binName);
+		Text.writeString(out, numrangeBin);
 		out.writeLong(numrangeBegin);
 		out.writeLong(numrangeEnd);
 	}
@@ -121,7 +121,7 @@ public class AerospikeSplit
 		port = in.readInt();
 		namespace = new String(Text.readString(in));
 		setName = new String(Text.readString(in));
-		binName = new String(Text.readString(in));
+		numrangeBin = new String(Text.readString(in));
 		numrangeBegin = in.readLong();
 		numrangeEnd = in.readLong();
 	}

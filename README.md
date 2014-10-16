@@ -46,7 +46,7 @@ Start Aerospike
     make start
 
 
-Setup Sample Data
+Setup Sample Data in Aerospike for Input Examples
 ----------------------------------------------------------------
 
     cd ~/aerospike/aerospike-hadoop
@@ -62,13 +62,6 @@ Setup Sample Data
         -PappArgs="['localhost:3000:test:integers:bin1', \
                     'seq-int', \
                     '0', '100000']"
-
-    # Load log files for the session_rollup demo.
-    ./gradlew sampledata:run \
-        -PappArgs="['localhost:3000:test:logrecs:bin1', \
-                'text-file', \
-                '/home/ksedgwic/aerospike/doc/data/WorldCup/wc_day52_1.log', \
-                '/home/ksedgwic/aerospike/doc/data/WorldCup/wc_day52_2.log']"
 
 
 Running Input Examples
@@ -99,9 +92,10 @@ Running Input Examples
         ./examples/word_count_input/build/libs/word_count_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=words \
-        -D aerospike.input.binname=bin1 \
         -D aerospike.input.operation=scan \
         /tmp/output
+
+    # Jump to "Inspect the results" below ...
 
     # -- OR --
 
@@ -112,9 +106,10 @@ Running Input Examples
         ./examples/int_sum_input/build/libs/int_sum_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
-        -D aerospike.input.binname=bin1 \
         -D aerospike.input.operation=scan \
         /tmp/output
+
+    # Jump to "Inspect the results" below ...
 
     # -- OR --
 
@@ -125,11 +120,13 @@ Running Input Examples
         ./examples/int_sum_input/build/libs/int_sum_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
-        -D aerospike.input.binname=bin1 \
         -D aerospike.input.operation=numrange \
+        -D aerospike.input.numrange.bin=bin1 \
         -D aerospike.input.numrange.begin=100 \
         -D aerospike.input.numrange.end=200 \
         /tmp/output
+
+    # Jump to "Inspect the results" below ...
 
     # -- OR --
 
@@ -143,6 +140,8 @@ Running Input Examples
         -D aerospike.input.operation=scan \
         /tmp/output
 
+    # Jump to "Inspect the results" below ...
+
     # -- OR --
 
     # Run the aggregate_int_input range example (New Hadoop API)
@@ -153,23 +152,9 @@ Running Input Examples
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
         -D aerospike.input.operation=numrange \
+        -D aerospike.input.numrange.bin=bin1 \
         -D aerospike.input.numrange.begin=100 \
         -D aerospike.input.numrange.end=200 \
-        /tmp/output
-
-    # -- OR --
-
-    # Run the session_rollup example (Old Hadoop API)
-    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
-    $HADOOP_PREFIX/bin/hadoop \
-        jar \
-        ./examples/session_rollup/build/libs/session_rollup.jar \
-        -D aerospike.input.namespace=test \
-        -D aerospike.input.setname=logrecs \
-        -D aerospike.input.binname=bin1 \
-        -D aerospike.input.operation=scan \
-        /tmp/wc_day52_1.log \
-        /tmp/wc_day52_2.log \
         /tmp/output
 
     # Inspect the results.
@@ -178,29 +163,36 @@ Running Input Examples
     $HADOOP_PREFIX/bin/hadoop fs -copyToLocal /tmp/output /tmp
     less /tmp/output/part*00000
 
-    # Stop HDFS
-    $HADOOP_PREFIX/sbin/stop-dfs.sh
 
-
-Running Output Examples
+Setup Sample Data in HDFS for Output Examples
 ----------------------------------------------------------------
 
     export HADOOP_PREFIX=/usr/local/hadoop
 
-    # Format HDFS
-    rm -rf /tmp/hadoop-$USER/dfs/data
-    $HADOOP_PREFIX/bin/hdfs namenode -format
-
-    # Start HDFS
-    $HADOOP_PREFIX/sbin/start-dfs.sh
-
-    # Check for {Secondary,}NameNode and DataNode
-    jps
-
-     # Load the test words into HDFS.
+    # Create a directory.
     $HADOOP_PREFIX/bin/hdfs dfs -mkdir /tmp
+
+    # Load the test words into HDFS.
     $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/words
     $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal /tmp/input /tmp/words
+
+    # Load the World Cup log data into HDFS
+    $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/wc_day52_1.log
+    $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/wc_day52_2.log
+    $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal \
+        $HOME/aerospike/doc/data/WorldCup/wc_day52_1.log /tmp/wc_day52_1.log
+    $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal \
+        $HOME/aerospike/doc/data/WorldCup/wc_day52_2.log /tmp/wc_day52_2.log
+
+    # Create the secondary indexes in Aerospike.
+    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
+        -c 'CREATE INDEX useridndx ON test.sessions (userid) NUMERIC'
+    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
+        -c 'CREATE INDEX startndx ON test.sessions (start) NUMERIC'
+
+
+Running Output Examples
+----------------------------------------------------------------
 
     # Run the Hadoop job.
     cd ~/aerospike/aerospike-hadoop
@@ -218,27 +210,9 @@ Running Output Examples
     ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
         -c 'SELECT * FROM test.counts'
 
-    # Stop HDFS
-    $HADOOP_PREFIX/sbin/stop-dfs.sh
+    # -- OR --
 
-
-Running the Session Rollup Example
-----------------------------------------------------------------
-
-     # Load the test words into HDFS.
-    $HADOOP_PREFIX/bin/hdfs dfs -mkdir /tmp
-    $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/wc_day52_1.log
-    $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/wc_day52_2.log
-    $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal ~ksedgwic/aerospike/doc/data/WorldCup/wc_day52_1.log /tmp/wc_day52_1.log
-    $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal ~ksedgwic/aerospike/doc/data/WorldCup/wc_day52_2.log /tmp/wc_day52_2.log
-
-    # Create the secondary indexes.
-    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
-        -c 'CREATE INDEX useridndx ON test.sessions (userid) NUMERIC'
-    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
-        -c 'CREATE INDEX startndx ON test.sessions (start) NUMERIC'
-
-    # Run the session_rollup example (Old Hadoop API)
+    # Run the session_rollup example (Old Hadoop API, small dataset)
     $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
     $HADOOP_PREFIX/bin/hadoop \
         jar \
@@ -253,22 +227,10 @@ Running the Session Rollup Example
     ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
         -c 'SELECT * FROM test.sessions'
 
-    # Run the session_rollup example (Old Hadoop API)
-    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
-    $HADOOP_PREFIX/bin/hadoop \
-        jar \
-        ./examples/session_rollup/build/libs/session_rollup.jar \
-        -Dmapred.reduce.tasks=30 \
-	`cat WORLDCUP_FILELIST` \
-        /tmp/output
 
-    # Run the session_rollup example (Old Hadoop API)
-    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
-    $HADOOP_PREFIX/bin/hadoop \
-        jar \
-        ./examples/session_rollup/build/libs/session_rollup.jar \
-        -D aerospike.input.namespace=test \
-        -D aerospike.input.setname=logrecs \
-        -D aerospike.input.binname=bin1 \
-        -D aerospike.input.operation=scan \
-        /tmp/output
+Done with HDFS
+----------------------------------------------------------------
+
+    # Stop HDFS
+    $HADOOP_PREFIX/sbin/stop-dfs.sh
+
