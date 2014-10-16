@@ -112,7 +112,7 @@ public class SampleData {
 		task.waitTillComplete();
 		log.info("created secondary index on " + binName);
 
-		for (long ll = offset; ll < nrecs; ++ll) {
+		for (long ll = offset; ll < offset + nrecs; ++ll) {
 
 			String keystr = "key-" + ll;
 
