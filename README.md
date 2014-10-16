@@ -24,7 +24,6 @@ Building
 
     # Build the example programs.
     ./gradlew :examples:word_count_input:installApp
-    ./gradlew :examples:int_sum_input:installApp
     ./gradlew :examples:aggregate_int_input:installApp
     ./gradlew :examples:word_count_output:installApp
     ./gradlew :examples:session_rollup:installApp
@@ -93,37 +92,6 @@ Running Input Examples
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=words \
         -D aerospike.input.operation=scan \
-        /tmp/output
-
-    # Jump to "Inspect the results" below ...
-
-    # -- OR --
-
-    # Run the int_sum_input example (New Hadoop API)
-    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
-    $HADOOP_PREFIX/bin/hadoop \
-        jar \
-        ./examples/int_sum_input/build/libs/int_sum_input.jar \
-        -D aerospike.input.namespace=test \
-        -D aerospike.input.setname=integers \
-        -D aerospike.input.operation=scan \
-        /tmp/output
-
-    # Jump to "Inspect the results" below ...
-
-    # -- OR --
-
-    # Run the int_sum_input range example (New Hadoop API)
-    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
-    $HADOOP_PREFIX/bin/hadoop \
-        jar \
-        ./examples/int_sum_input/build/libs/int_sum_input.jar \
-        -D aerospike.input.namespace=test \
-        -D aerospike.input.setname=integers \
-        -D aerospike.input.operation=numrange \
-        -D aerospike.input.numrange.bin=bin1 \
-        -D aerospike.input.numrange.begin=100 \
-        -D aerospike.input.numrange.end=200 \
         /tmp/output
 
     # Jump to "Inspect the results" below ...

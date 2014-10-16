@@ -1,7 +1,6 @@
 include ':mapreduce'
 include ':sampledata'
 include ':examples:word_count_input'
-include ':examples:int_sum_input'
 include ':examples:aggregate_int_input'
 include ':examples:word_count_output'
 include ':examples:session_rollup'
