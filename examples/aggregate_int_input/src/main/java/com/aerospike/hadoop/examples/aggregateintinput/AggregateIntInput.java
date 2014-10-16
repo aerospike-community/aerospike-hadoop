@@ -58,7 +58,8 @@ public class AggregateIntInput extends Configured implements Tool {
       
     public void map(AerospikeKey key, AerospikeRecord rec, Context context
 										) throws IOException, InterruptedException {
-			int vv = (Integer) rec.bins.get(binName);
+			Map<String,Object> bins = rec.bins;
+			int vv = (Integer) bins.get(binName);
 			val.set(vv);
 			mod.set(vv % KK);
 			context.write(mod, val);
@@ -100,7 +101,7 @@ public class AggregateIntInput extends Configured implements Tool {
 
 		binName = AerospikeConfigUtil.getInputBinName(conf);
 
-		log.info("run starting");
+		log.info("run starting on bin " + binName);
 
     job.setJarByClass(AggregateIntInput.class);
     job.setInputFormatClass(AerospikeInputFormat.class);
