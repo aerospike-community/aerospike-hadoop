@@ -100,6 +100,7 @@ public class SampleData {
 
 	public static void runSeqInt(String[] args, int argi) throws Exception {
 
+		int offset = Integer.parseInt(args[argi++]);
 		int nrecs = Integer.parseInt(args[argi++]);
 
 		String ndxname = binName + "ndx";
@@ -111,7 +112,7 @@ public class SampleData {
 		task.waitTillComplete();
 		log.info("created secondary index on " + binName);
 
-		for (long ll = 0; ll < nrecs; ++ll) {
+		for (long ll = offset; ll < nrecs; ++ll) {
 
 			String keystr = "key-" + ll;
 

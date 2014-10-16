@@ -61,7 +61,7 @@ Setup Sample Data
     ./gradlew sampledata:run \
         -PappArgs="['localhost:3000:test:integers:bin1', \
                     'seq-int', \
-                    '100000']"
+                    '0', '100000']"
 
     # Load log files for the session_rollup demo.
     ./gradlew sampledata:run \
