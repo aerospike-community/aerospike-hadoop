@@ -48,7 +48,7 @@ public class AggregateIntInput extends Configured implements Tool {
 
 	private static final int KK = 3163;
 
-	private static String binName;
+	private static final String binName = "bin1";
 
   public static class Map
 		extends Mapper<AerospikeKey, AerospikeRecord, LongWritable, LongWritable> {
@@ -58,8 +58,7 @@ public class AggregateIntInput extends Configured implements Tool {
       
     public void map(AerospikeKey key, AerospikeRecord rec, Context context
 										) throws IOException, InterruptedException {
-			Map<String,Object> bins = rec.bins;
-			int vv = (Integer) bins.get(binName);
+			int vv = (Integer) rec.bins.get(binName);
 			val.set(vv);
 			mod.set(vv % KK);
 			context.write(mod, val);
@@ -98,8 +97,6 @@ public class AggregateIntInput extends Configured implements Tool {
 
 		@SuppressWarnings("deprecation")
 		final Job job = new Job(conf, "AerospikeAggregateIntInput");
-
-		binName = AerospikeConfigUtil.getInputBinName(conf);
 
 		log.info("run starting on bin " + binName);
 

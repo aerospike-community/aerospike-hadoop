@@ -140,7 +140,6 @@ Running Input Examples
         ./examples/aggregate_int_input/build/libs/aggregate_int_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
-        -D aerospike.input.binname=bin1 \
         -D aerospike.input.operation=scan \
         /tmp/output
 
@@ -153,7 +152,6 @@ Running Input Examples
         ./examples/aggregate_int_input/build/libs/aggregate_int_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
-        -D aerospike.input.binname=bin1 \
         -D aerospike.input.operation=numrange \
         -D aerospike.input.numrange.begin=100 \
         -D aerospike.input.numrange.end=200 \
