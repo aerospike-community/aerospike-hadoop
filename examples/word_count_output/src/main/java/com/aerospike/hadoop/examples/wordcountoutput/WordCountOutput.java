@@ -58,97 +58,109 @@ import com.aerospike.hadoop.mapreduce.AerospikeRecordWriter;
 
 public class WordCountOutput extends Configured implements Tool {
 
-	private static final Log log = LogFactory.getLog(WordCountOutput.class);
+    private static final Log log = LogFactory.getLog(WordCountOutput.class);
 
-	public static class Map extends MapReduceBase implements
-			Mapper<LongWritable, Text, Text, IntWritable> {
-		private final static IntWritable one = new IntWritable(1);
-		private Text word = new Text();
+    public static class Map
+        extends MapReduceBase
+        implements Mapper<LongWritable, Text, Text, IntWritable> {
+        private final static IntWritable one = new IntWritable(1);
+        private Text word = new Text();
 
-		public void map(LongWritable key, Text value,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
-				throws IOException {
-			String line = value.toString();
-			StringTokenizer tokenizer = new StringTokenizer(line);
-			while (tokenizer.hasMoreTokens()) {
-				word.set(tokenizer.nextToken());
-				output.collect(word, one);
-			}
-		}
-	}
-
-	public static class Reduce extends MapReduceBase implements
-			Reducer<Text, IntWritable, Text, IntWritable> {
-				
-		public void reduce(Text key, Iterator<IntWritable> values,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
-				throws IOException {
-			int sum = 0;
-			while (values.hasNext()) {
-				sum += values.next().get();
-			}
-			output.collect(key, new IntWritable(sum));
-		}
-	}
-
-	public static class MyOutputFormat
-		extends AerospikeOutputFormat<Text, IntWritable> {
-
-		public static class MyRecordWriter
-			extends AerospikeRecordWriter<Text, IntWritable> {
-
-			public MyRecordWriter(Configuration cfg, Progressable progressable) {
-				super(cfg, progressable);
-			}
-
-			@Override
-			public void writeAerospike(Text key,
-																 IntWritable value,
-																 AerospikeClient client,
-																 WritePolicy writePolicy,
-																 String namespace,
-																 String setName) throws IOException {
-				Key kk = new Key(namespace, setName, key.toString());
-				Bin bin1 = new Bin("word", key.toString());
-				Bin bin2 = new Bin("count", value.get());
-				client.put(writePolicy, kk, bin1, bin2);
-			}
-		}
-
-		public RecordWriter<Text, IntWritable>
-			        getAerospikeRecordWriter(Configuration conf, Progressable prog) {
-			return new MyRecordWriter(conf, prog);
-		}
-	}
-
-	public int run(final String[] args) throws Exception {
-
-		log.info("run starting");
-
-		final Configuration conf = getConf();
-
-		JobConf job = new JobConf(conf, WordCountOutput.class);
-		job.setJobName("AerospikeWordCountOutput");
-
-    for (int ii = 0; ii < args.length; ++ii) {
-      FileInputFormat.addInputPath(job, new Path(args[ii]));
+        public void map(LongWritable key, Text value,
+                        OutputCollector<Text, IntWritable> output,
+                        Reporter reporter)
+            throws IOException {
+            String line = value.toString();
+            StringTokenizer tokenizer = new StringTokenizer(line);
+            while (tokenizer.hasMoreTokens()) {
+                word.set(tokenizer.nextToken());
+                output.collect(word, one);
+            }
+        }
     }
 
-		job.setMapperClass(Map.class);
-		job.setCombinerClass(Reduce.class);
-		job.setReducerClass(Reduce.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(IntWritable.class);
+    public static class Reduce
+        extends MapReduceBase
+        implements Reducer<Text, IntWritable, Text, IntWritable> {
+                
+        public void reduce(Text key, Iterator<IntWritable> values,
+                           OutputCollector<Text, IntWritable> output,
+                           Reporter reporter)
+            throws IOException {
+            int sum = 0;
+            while (values.hasNext()) {
+                sum += values.next().get();
+            }
+            output.collect(key, new IntWritable(sum));
+        }
+    }
 
-		job.setOutputFormat(MyOutputFormat.class);
+    public static class MyOutputFormat
+        extends AerospikeOutputFormat<Text, IntWritable> {
 
-		JobClient.runJob(job);
+        public static class MyRecordWriter
+            extends AerospikeRecordWriter<Text, IntWritable> {
 
-		log.info("finished");
-		return 0;
-	}
+            public MyRecordWriter(Configuration cfg, Progressable progressable) {
+                super(cfg, progressable);
+            }
 
-	public static void main(final String[] args) throws Exception {
-		System.exit(ToolRunner.run(new WordCountOutput(), args));
-	}
+            @Override
+            public void writeAerospike(Text key,
+                                       IntWritable value,
+                                       AerospikeClient client,
+                                       WritePolicy writePolicy,
+                                       String namespace,
+                                       String setName) throws IOException {
+                Key kk = new Key(namespace, setName, key.toString());
+                Bin bin1 = new Bin("word", key.toString());
+                Bin bin2 = new Bin("count", value.get());
+                client.put(writePolicy, kk, bin1, bin2);
+            }
+        }
+
+        public RecordWriter<Text, IntWritable>
+            getAerospikeRecordWriter(Configuration conf, Progressable prog) {
+            return new MyRecordWriter(conf, prog);
+        }
+    }
+
+    public int run(final String[] args) throws Exception {
+
+        log.info("run starting");
+
+        final Configuration conf = getConf();
+
+        JobConf job = new JobConf(conf, WordCountOutput.class);
+        job.setJobName("AerospikeWordCountOutput");
+
+        for (int ii = 0; ii < args.length; ++ii) {
+            FileInputFormat.addInputPath(job, new Path(args[ii]));
+        }
+
+        job.setMapperClass(Map.class);
+        job.setCombinerClass(Reduce.class);
+        job.setReducerClass(Reduce.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+
+        job.setOutputFormat(MyOutputFormat.class);
+
+        JobClient.runJob(job);
+
+        log.info("finished");
+        return 0;
+    }
+
+    public static void main(final String[] args) throws Exception {
+        System.exit(ToolRunner.run(new WordCountOutput(), args));
+    }
 }
+
+// Local Variables:
+// mode: java
+// c-basic-offset: 4
+// tab-width: 4
+// indent-tabs-mode: nil
+// End:
+// vim: softtabstop=4:shiftwidth=4:expandtab

@@ -34,79 +34,90 @@ import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.WritePolicy;
 
 public abstract class AerospikeRecordWriter<KK, VV>
-	extends RecordWriter<KK, VV>
-	implements org.apache.hadoop.mapred.RecordWriter<KK, VV> {
+    extends RecordWriter<KK, VV>
+    implements org.apache.hadoop.mapred.RecordWriter<KK, VV> {
 
-	private static final Log log = LogFactory.getLog(AerospikeRecordWriter.class);
-	private static final int NO_TASK_ID = -1;
+    private static final Log log =
+        LogFactory.getLog(AerospikeRecordWriter.class);
 
-	protected final Configuration cfg;
-	protected boolean initialized = false;
+    private static final int NO_TASK_ID = -1;
 
-	private static String namespace;
-	private static String setName;
-	private static AerospikeClient client;
-	private static WritePolicy writePolicy;
+    protected final Configuration cfg;
+    protected boolean initialized = false;
 
-	private Progressable progressable;
+    private static String namespace;
+    private static String setName;
+    private static AerospikeClient client;
+    private static WritePolicy writePolicy;
 
-	public AerospikeRecordWriter(Configuration cfg, Progressable progressable) {
-		this.cfg = cfg;
-		this.progressable = progressable;
-	}
+    private Progressable progressable;
 
-	public abstract void writeAerospike(KK key,
-																			VV value,
-																			AerospikeClient client,
-																			WritePolicy writePolicy,
-																			String namespace,
-																			String setName) throws IOException;
+    public AerospikeRecordWriter(Configuration cfg, Progressable progressable) {
+        this.cfg = cfg;
+        this.progressable = progressable;
+    }
 
-	@Override
-	public void write(KK key, VV value) throws IOException {
-		if (!initialized) {
-			initialized = true;
-			init();
-		}
+    public abstract void writeAerospike(KK key,
+                                        VV value,
+                                        AerospikeClient client,
+                                        WritePolicy writePolicy,
+                                        String namespace,
+                                        String setName) throws IOException;
 
-		writeAerospike(key, value, client, writePolicy, namespace, setName);
-	}
+    @Override
+    public void write(KK key, VV value) throws IOException {
+        if (!initialized) {
+            initialized = true;
+            init();
+        }
 
-	protected void init() throws IOException {
+        writeAerospike(key, value, client, writePolicy, namespace, setName);
+    }
 
-		String host = AerospikeConfigUtil.getOutputHost(cfg);
-		int port = AerospikeConfigUtil.getOutputPort(cfg);
+    protected void init() throws IOException {
 
-		namespace = AerospikeConfigUtil.getOutputNamespace(cfg);
-		setName = AerospikeConfigUtil.getOutputSetName(cfg);
+        String host = AerospikeConfigUtil.getOutputHost(cfg);
+        int port = AerospikeConfigUtil.getOutputPort(cfg);
 
-		log.info(String.format("init: %s %d %s %s", host, port, namespace, setName));
+        namespace = AerospikeConfigUtil.getOutputNamespace(cfg);
+        setName = AerospikeConfigUtil.getOutputSetName(cfg);
 
-		ClientPolicy policy = new ClientPolicy();
-		policy.user = "";
-		policy.password = "";
-		policy.failIfNotConnected = true;
+        log.info(String.format("init: %s %d %s %s",
+                               host, port, namespace, setName));
 
-		client = new AerospikeClient(policy, host, port);
+        ClientPolicy policy = new ClientPolicy();
+        policy.user = "";
+        policy.password = "";
+        policy.failIfNotConnected = true;
 
-		writePolicy = new WritePolicy();
-	}
+        client = new AerospikeClient(policy, host, port);
 
-	@Override
-	public void close(TaskAttemptContext context) throws IOException {
-		doClose(context);
-	}
+        writePolicy = new WritePolicy();
+    }
 
-	@Override
-	public void close(org.apache.hadoop.mapred.Reporter reporter
-										) throws IOException {
-		doClose(reporter);
-	}
+    @Override
+    public void close(TaskAttemptContext context) throws IOException {
+        doClose(context);
+    }
 
-	protected void doClose(Progressable progressable) {
-		log.info("doClose");
-		initialized = false;
-		if (client != null)
-			client.close();
-	}
+    @Override
+    public void close(org.apache.hadoop.mapred.Reporter reporter
+                      ) throws IOException {
+        doClose(reporter);
+    }
+
+    protected void doClose(Progressable progressable) {
+        log.info("doClose");
+        initialized = false;
+        if (client != null)
+            client.close();
+    }
 }
+
+// Local Variables:
+// mode: java
+// c-basic-offset: 4
+// tab-width: 4
+// indent-tabs-mode: nil
+// End:
+// vim: softtabstop=4:shiftwidth=4:expandtab

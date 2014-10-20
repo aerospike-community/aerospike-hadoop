@@ -51,87 +51,97 @@ import com.aerospike.client.policy.ScanPolicy;
  * An {@link InputFormat} for data stored in an Aerospike database.
  */
 public class AerospikeInputFormat
-	extends InputFormat<AerospikeKey, AerospikeRecord>
-	implements org.apache.hadoop.mapred.InputFormat<AerospikeKey,
-																										AerospikeRecord> {
+    extends InputFormat<AerospikeKey, AerospikeRecord>
+    implements org.apache.hadoop.mapred.InputFormat<AerospikeKey,
+                                                        AerospikeRecord> {
 
-	private static final Log log = LogFactory.getLog(AerospikeInputFormat.class);
+    private static final Log log =
+        LogFactory.getLog(AerospikeInputFormat.class);
 
-	// ---------------- NEW API ----------------
+    // ---------------- NEW API ----------------
 
-	public List<InputSplit> getSplits(JobContext context) throws IOException {
-		// Delegate to the old API.
-		Configuration cfg = context.getConfiguration();
-		JobConf jobconf = AerospikeConfigUtil.asJobConf(cfg);
-		return Arrays.asList((InputSplit[]) getSplits(jobconf,
-																									jobconf.getNumMapTasks()));
-	}
+    public List<InputSplit> getSplits(JobContext context) throws IOException {
+        // Delegate to the old API.
+        Configuration cfg = context.getConfiguration();
+        JobConf jobconf = AerospikeConfigUtil.asJobConf(cfg);
+        return Arrays.asList((InputSplit[]) getSplits(jobconf,
+                                                      jobconf.getNumMapTasks()));
+    }
 
-	public RecordReader<AerospikeKey, AerospikeRecord> createRecordReader(
-      InputSplit split, TaskAttemptContext context)
-		throws IOException, InterruptedException {
-		return new AerospikeRecordReader();
-	}
+    public RecordReader<AerospikeKey, AerospikeRecord>
+        createRecordReader(InputSplit split, TaskAttemptContext context)
+        throws IOException, InterruptedException {
+        return new AerospikeRecordReader();
+    }
 
-	// ---------------- OLD API ----------------
+    // ---------------- OLD API ----------------
 
-	public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf job, int numSplits)
-		throws IOException {
-		try {
+    public org.apache.hadoop.mapred.InputSplit[]
+        getSplits(JobConf job, int numSplits) throws IOException {
+        try {
 
-			String oper = AerospikeConfigUtil.getInputOperation(job);
-			String host = AerospikeConfigUtil.getInputHost(job);
-			int port = AerospikeConfigUtil.getInputPort(job);
-			String namespace = AerospikeConfigUtil.getInputNamespace(job);
-			String setName = AerospikeConfigUtil.getInputSetName(job);
-			String numrangeBin = "";
-			long numrangeBegin = 0;
-			long numrangeEnd = 0;
-			if (oper.equals("numrange")) {
-				numrangeBin = AerospikeConfigUtil.getInputNumRangeBin(job);
-				numrangeBegin = AerospikeConfigUtil.getInputNumRangeBegin(job);
-				numrangeEnd = AerospikeConfigUtil.getInputNumRangeEnd(job);
-			}
-			
-			log.info(String.format("using: %s %d %s %s",
-														 host, port, namespace, setName));
+            String oper = AerospikeConfigUtil.getInputOperation(job);
+            String host = AerospikeConfigUtil.getInputHost(job);
+            int port = AerospikeConfigUtil.getInputPort(job);
+            String namespace = AerospikeConfigUtil.getInputNamespace(job);
+            String setName = AerospikeConfigUtil.getInputSetName(job);
+            String numrangeBin = "";
+            long numrangeBegin = 0;
+            long numrangeEnd = 0;
+            if (oper.equals("numrange")) {
+                numrangeBin = AerospikeConfigUtil.getInputNumRangeBin(job);
+                numrangeBegin = AerospikeConfigUtil.getInputNumRangeBegin(job);
+                numrangeEnd = AerospikeConfigUtil.getInputNumRangeEnd(job);
+            }
+            
+            log.info(String.format("using: %s %d %s %s",
+                                   host, port, namespace, setName));
 
-			AerospikeClient client = new AerospikeClient(host, port);
-			try {
-				Node[] nodes = client.getNodes();
-				int nsplits = nodes.length;
-				if (nsplits == 0) {
-					throw new IOException("no Aerospike nodes found");
-				}
-				log.info(String.format("found %d nodes", nsplits));
-				AerospikeSplit[] splits = new AerospikeSplit[nsplits];
-				for (int ii = 0; ii < nsplits; ii++) {
-					Node node = nodes[ii];
-					String nodeName = node.getName();
-					Host nodehost = node.getHost();
-					splits[ii] = new AerospikeSplit(oper, nodeName,
-																					nodehost.name, nodehost.port,
-																					namespace, setName, numrangeBin,
-																					numrangeBegin, numrangeEnd);
-					log.info("split: " + node);
-				}
-				return splits;
-			}
-			finally {
-				client.close();
-			}
-		}
-		catch (Exception ex) {
-			throw new IOException("exception in getSplits", ex);
-		}
-	}
+            AerospikeClient client = new AerospikeClient(host, port);
+            try {
+                Node[] nodes = client.getNodes();
+                int nsplits = nodes.length;
+                if (nsplits == 0) {
+                    throw new IOException("no Aerospike nodes found");
+                }
+                log.info(String.format("found %d nodes", nsplits));
+                AerospikeSplit[] splits = new AerospikeSplit[nsplits];
+                for (int ii = 0; ii < nsplits; ii++) {
+                    Node node = nodes[ii];
+                    String nodeName = node.getName();
+                    Host nodehost = node.getHost();
+                    splits[ii] = new AerospikeSplit(oper, nodeName,
+                                                    nodehost.name, nodehost.port,
+                                                    namespace, setName,
+                                                    numrangeBin, numrangeBegin,
+                                                    numrangeEnd);
+                    log.info("split: " + node);
+                }
+                return splits;
+            }
+            finally {
+                client.close();
+            }
+        }
+        catch (Exception ex) {
+            throw new IOException("exception in getSplits", ex);
+        }
+    }
 
-	public org.apache.hadoop.mapred.RecordReader<AerospikeKey, AerospikeRecord>
-		getRecordReader(org.apache.hadoop.mapred.InputSplit split,
-										JobConf job,
-										Reporter reporter
-										) throws IOException {
-		return new AerospikeRecordReader((AerospikeSplit) split);
-	}
+    public org.apache.hadoop.mapred.RecordReader<AerospikeKey, AerospikeRecord>
+        getRecordReader(org.apache.hadoop.mapred.InputSplit split,
+                        JobConf job,
+                        Reporter reporter
+                        ) throws IOException {
+        return new AerospikeRecordReader((AerospikeSplit) split);
+    }
 
 }
+
+// Local Variables:
+// mode: java
+// c-basic-offset: 4
+// tab-width: 4
+// indent-tabs-mode: nil
+// End:
+// vim: softtabstop=4:shiftwidth=4:expandtab

@@ -52,70 +52,81 @@ import com.aerospike.hadoop.mapreduce.AerospikeRecord;
 
 public class WordCountInput extends Configured implements Tool {
 
-	private static final Log log = LogFactory.getLog(WordCountInput.class);
+    private static final Log log = LogFactory.getLog(WordCountInput.class);
 
-	private static String binName = "bin1";
+    private static String binName = "bin1";
 
-	public static class Map extends MapReduceBase implements
-			Mapper<AerospikeKey, AerospikeRecord, Text, IntWritable> {
+    public static class Map
+        extends MapReduceBase
+        implements Mapper<AerospikeKey, AerospikeRecord, Text, IntWritable> {
 
-		private final static IntWritable one = new IntWritable(1);
-		private Text word = new Text();
+        private final static IntWritable one = new IntWritable(1);
+        private Text word = new Text();
 
-		public void map(AerospikeKey key,
-										AerospikeRecord rec,
-										OutputCollector<Text, IntWritable> output,
-										Reporter reporter
-										) throws IOException {
-			String line = rec.bins.get(binName).toString();
-			StringTokenizer tokenizer = new StringTokenizer(line);
-			while (tokenizer.hasMoreTokens()) {
-				word.set(tokenizer.nextToken());
-				output.collect(word, one);
-			}
-		}
-	}
+        public void map(AerospikeKey key,
+                        AerospikeRecord rec,
+                        OutputCollector<Text, IntWritable> output,
+                        Reporter reporter
+                        ) throws IOException {
+            String line = rec.bins.get(binName).toString();
+            StringTokenizer tokenizer = new StringTokenizer(line);
+            while (tokenizer.hasMoreTokens()) {
+                word.set(tokenizer.nextToken());
+                output.collect(word, one);
+            }
+        }
+    }
 
-	public static class Reduce extends MapReduceBase implements
-			Reducer<Text, IntWritable, Text, IntWritable> {
-				
-		public void reduce(Text word, Iterator<IntWritable> values,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
-				throws IOException {
-			int sum = 0;
-			while (values.hasNext()) {
-				sum += values.next().get();
-			}
-			output.collect(word, new IntWritable(sum));
-		}
-	}
+    public static class Reduce
+        extends MapReduceBase
+        implements Reducer<Text, IntWritable, Text, IntWritable> {
+                
+        public void reduce(Text word, Iterator<IntWritable> values,
+                           OutputCollector<Text, IntWritable> output,
+                           Reporter reporter)
+            throws IOException {
+            int sum = 0;
+            while (values.hasNext()) {
+                sum += values.next().get();
+            }
+            output.collect(word, new IntWritable(sum));
+        }
+    }
 
-	public int run(final String[] args) throws Exception {
+    public int run(final String[] args) throws Exception {
 
-		log.info("run starting");
+        log.info("run starting");
 
-		final Configuration conf = getConf();
+        final Configuration conf = getConf();
 
-		JobConf job = new JobConf(conf, WordCountInput.class);
-		job.setJobName("AerospikeWordCountInput");
+        JobConf job = new JobConf(conf, WordCountInput.class);
+        job.setJobName("AerospikeWordCountInput");
 
-		job.setInputFormat(AerospikeInputFormat.class);
-		job.setMapperClass(Map.class);
-		job.setCombinerClass(Reduce.class);
-		job.setReducerClass(Reduce.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(IntWritable.class);
-		job.setOutputFormat(TextOutputFormat.class);
+        job.setInputFormat(AerospikeInputFormat.class);
+        job.setMapperClass(Map.class);
+        job.setCombinerClass(Reduce.class);
+        job.setReducerClass(Reduce.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+        job.setOutputFormat(TextOutputFormat.class);
 
-		FileOutputFormat.setOutputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[0]));
 
-		JobClient.runJob(job);
+        JobClient.runJob(job);
 
-		log.info("finished");
-		return 0;
-	}
+        log.info("finished");
+        return 0;
+    }
 
-	public static void main(final String[] args) throws Exception {
-		System.exit(ToolRunner.run(new WordCountInput(), args));
-	}
+    public static void main(final String[] args) throws Exception {
+        System.exit(ToolRunner.run(new WordCountInput(), args));
+    }
 }
+
+// Local Variables:
+// mode: java
+// c-basic-offset: 4
+// tab-width: 4
+// indent-tabs-mode: nil
+// End:
+// vim: softtabstop=4:shiftwidth=4:expandtab

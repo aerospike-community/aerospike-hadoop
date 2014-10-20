@@ -44,80 +44,89 @@ import com.aerospike.hadoop.mapreduce.AerospikeRecord;
 
 public class AggregateIntInput extends Configured implements Tool {
 
-	private static final Log log = LogFactory.getLog(AggregateIntInput.class);
+    private static final Log log = LogFactory.getLog(AggregateIntInput.class);
 
-	private static final int KK = 3163;
+    private static final int KK = 3163;
 
-	private static final String binName = "bin1";
+    private static final String binName = "bin1";
 
-  public static class Map
-		extends Mapper<AerospikeKey, AerospikeRecord, LongWritable, LongWritable> {
+    public static class Map
+        extends Mapper<AerospikeKey, AerospikeRecord,
+                       LongWritable, LongWritable> {
 
-		private LongWritable val = new LongWritable();
-		private LongWritable mod = new LongWritable();
+        private LongWritable val = new LongWritable();
+        private LongWritable mod = new LongWritable();
       
-    public void map(AerospikeKey key, AerospikeRecord rec, Context context
-										) throws IOException, InterruptedException {
-			int vv = (Integer) rec.bins.get(binName);
-			val.set(vv);
-			mod.set(vv % KK);
-			context.write(mod, val);
+        public void map(AerospikeKey key, AerospikeRecord rec, Context context)
+            throws IOException, InterruptedException {
+            int vv = (Integer) rec.bins.get(binName);
+            val.set(vv);
+            mod.set(vv % KK);
+            context.write(mod, val);
+        }
     }
-  }
 
-  public static class Reduce
-		extends Reducer<LongWritable, LongWritable, LongWritable, Text> {
+    public static class Reduce
+        extends Reducer<LongWritable, LongWritable, LongWritable, Text> {
 
-    public void reduce(LongWritable mod,
-											 Iterable<LongWritable> values,
-                       Context context
-                       ) throws IOException, InterruptedException {
+        public void reduce(LongWritable mod,
+                           Iterable<LongWritable> values,
+                           Context context)
+            throws IOException, InterruptedException {
 
-			long num = 0;	// number of elements
-			long sum = 0;	// sum of elements
-			long min = Long.MAX_VALUE;	// minimum element
-			long max = Long.MIN_VALUE;	// maximum element
+            long num = 0;   // number of elements
+            long sum = 0;   // sum of elements
+            long min = Long.MAX_VALUE;  // minimum element
+            long max = Long.MIN_VALUE;  // maximum element
 
-			for (LongWritable val : values) {
-				long vv = val.get();
-				num += 1;
-				sum += vv;
-				if (vv < min) min = vv;
-				if (vv > max) max = vv;
-			}
+            for (LongWritable val : values) {
+                long vv = val.get();
+                num += 1;
+                sum += vv;
+                if (vv < min) min = vv;
+                if (vv > max) max = vv;
+            }
 
-			String rec = String.format("%d %d %d %d", num, min, max, sum);
+            String rec = String.format("%d %d %d %d", num, min, max, sum);
 
-      context.write(mod, new Text(rec));
+            context.write(mod, new Text(rec));
+        }
     }
-  }
 
-	public int run(final String[] args) throws Exception {
-		final Configuration conf = getConf();
+    public int run(final String[] args) throws Exception {
+        final Configuration conf = getConf();
 
-		@SuppressWarnings("deprecation")
-		final Job job = new Job(conf, "AerospikeAggregateIntInput");
+        @SuppressWarnings("deprecation")
+            final Job job = new Job(conf, "AerospikeAggregateIntInput");
 
-		log.info("run starting on bin " + binName);
+        log.info("run starting on bin " + binName);
 
-    job.setJarByClass(AggregateIntInput.class);
-    job.setInputFormatClass(AerospikeInputFormat.class);
-    job.setMapperClass(Map.class);
-		job.setMapOutputKeyClass(LongWritable.class);
-		job.setMapOutputValueClass(LongWritable.class);
-    // job.setCombinerClass(Reduce.class); // no combiner
-    job.setReducerClass(Reduce.class);
-    job.setOutputKeyClass(LongWritable.class);
-    job.setOutputValueClass(Text.class);
+        job.setJarByClass(AggregateIntInput.class);
+        job.setInputFormatClass(AerospikeInputFormat.class);
+        job.setMapperClass(Map.class);
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(LongWritable.class);
+        // job.setCombinerClass(Reduce.class); // no combiner
+        job.setReducerClass(Reduce.class);
+        job.setOutputKeyClass(LongWritable.class);
+        job.setOutputValueClass(Text.class);
 
-		FileOutputFormat.setOutputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[0]));
 
-		int status = job.waitForCompletion(true) ? 0 : 1;
-		log.info("run finished, status=" + status);
-		return status;
-	}
+        int status = job.waitForCompletion(true) ? 0 : 1;
+        log.info("run finished, status=" + status);
+        return status;
+    }
 
-	public static void main(final String[] args) throws Exception {
-		System.exit(ToolRunner.run(new AggregateIntInput(), args));
-	}
+    public static void main(final String[] args) throws Exception {
+        System.exit(ToolRunner.run(new AggregateIntInput(), args));
+    }
 }
+
+// Local Variables:
+// mode: java
+// c-basic-offset: 4
+// tab-width: 4
+// indent-tabs-mode: nil
+// End:
+// vim: softtabstop=4:shiftwidth=4:expandtab

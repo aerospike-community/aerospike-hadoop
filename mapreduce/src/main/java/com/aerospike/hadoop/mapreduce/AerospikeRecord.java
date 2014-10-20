@@ -39,93 +39,101 @@ import com.aerospike.client.util.Unpacker.ObjectUnpacker;
 
 public class AerospikeRecord implements Writable {
 
-	public Map<String,Object> bins;
-	public List<Map<String,Object>> duplicates;
-	public int generation;
-	public int expiration;
+    public Map<String,Object> bins;
+    public List<Map<String,Object>> duplicates;
+    public int generation;
+    public int expiration;
 
-	public AerospikeRecord() {
-		this.bins = null;
-		this.duplicates = null;
-		this.generation = 0;
-		this.expiration = 0;
-	}
+    public AerospikeRecord() {
+        this.bins = null;
+        this.duplicates = null;
+        this.generation = 0;
+        this.expiration = 0;
+    }
 
-	public AerospikeRecord(Record rec) {
-		this.bins = rec.bins;
-		this.duplicates = rec.duplicates;
-		this.generation = rec.generation;
-		this.expiration = rec.expiration;
-	}
+    public AerospikeRecord(Record rec) {
+        this.bins = rec.bins;
+        this.duplicates = rec.duplicates;
+        this.generation = rec.generation;
+        this.expiration = rec.expiration;
+    }
 
-	public AerospikeRecord(AerospikeRecord rec) {
-		this.bins = rec.bins;
-		this.duplicates = rec.duplicates;
-		this.generation = rec.generation;
-		this.expiration = rec.expiration;
-	}
+    public AerospikeRecord(AerospikeRecord rec) {
+        this.bins = rec.bins;
+        this.duplicates = rec.duplicates;
+        this.generation = rec.generation;
+        this.expiration = rec.expiration;
+    }
 
-	public void set(Record rec) {
-		this.bins = rec.bins;
-		this.duplicates = rec.duplicates;
-		this.generation = rec.generation;
-		this.expiration = rec.expiration;
-	}
+    public void set(Record rec) {
+        this.bins = rec.bins;
+        this.duplicates = rec.duplicates;
+        this.generation = rec.generation;
+        this.expiration = rec.expiration;
+    }
 
-	public void set(AerospikeRecord rec) {
-		this.bins = rec.bins;
-		this.duplicates = rec.duplicates;
-		this.generation = rec.generation;
-		this.expiration = rec.expiration;
-	}
+    public void set(AerospikeRecord rec) {
+        this.bins = rec.bins;
+        this.duplicates = rec.duplicates;
+        this.generation = rec.generation;
+        this.expiration = rec.expiration;
+    }
 
-	public Record toRecord() {
-		return new Record(bins, duplicates, generation, expiration);
-	}
+    public Record toRecord() {
+        return new Record(bins, duplicates, generation, expiration);
+    }
 
-	public void write(DataOutput out) throws IOException {
-		try {
-			out.writeInt(generation);
-			out.writeInt(expiration);
-			out.writeInt(bins.size());
-			for (Map.Entry<String, Object> entry : bins.entrySet()) {
-				out.writeUTF(entry.getKey());
-				Packer pack = new Packer();
-				pack.packObject(entry.getValue());
-				byte[] buff = pack.toByteArray();
-				out.writeInt(buff.length);
-				out.write(buff);
-			}
-		}
-		catch (Exception ex) {
-			throw new IOException(ex);
-		}
-	}
+    public void write(DataOutput out) throws IOException {
+        try {
+            out.writeInt(generation);
+            out.writeInt(expiration);
+            out.writeInt(bins.size());
+            for (Map.Entry<String, Object> entry : bins.entrySet()) {
+                out.writeUTF(entry.getKey());
+                Packer pack = new Packer();
+                pack.packObject(entry.getValue());
+                byte[] buff = pack.toByteArray();
+                out.writeInt(buff.length);
+                out.write(buff);
+            }
+        }
+        catch (Exception ex) {
+            throw new IOException(ex);
+        }
+    }
 
-	public void readFields(DataInput in) throws IOException {
-		try {
-			generation = in.readInt();
-			expiration = in.readInt();
-			int nbins = in.readInt();
-			bins = new HashMap<String, Object>();
-			for (int ii = 0; ii < nbins; ++ii) {
-				String key = in.readUTF();
-				int buflen = in.readInt();
-				byte[] buff = new byte[buflen];
-				in.readFully(buff);
-				ObjectUnpacker unpack = new ObjectUnpacker(buff, 0, buff.length);
-				Object obj = unpack.unpackObject();
-				bins.put(key, obj);
-			}
-		}
-		catch (Exception ex) {
-			throw new IOException(ex);
-		}
-	}
+    public void readFields(DataInput in) throws IOException {
+        try {
+            generation = in.readInt();
+            expiration = in.readInt();
+            int nbins = in.readInt();
+            bins = new HashMap<String, Object>();
+            for (int ii = 0; ii < nbins; ++ii) {
+                String key = in.readUTF();
+                int buflen = in.readInt();
+                byte[] buff = new byte[buflen];
+                in.readFully(buff);
+                ObjectUnpacker unpack = new ObjectUnpacker(buff, 0, buff.length);
+                Object obj = unpack.unpackObject();
+                bins.put(key, obj);
+            }
+        }
+        catch (Exception ex) {
+            throw new IOException(ex);
+        }
+    }
        
-	public static AerospikeRecord read(DataInput in) throws IOException {
-		AerospikeRecord rec = new AerospikeRecord();
-		rec.readFields(in);
-		return rec;
-	}
+    public static AerospikeRecord read(DataInput in) throws IOException {
+        AerospikeRecord rec = new AerospikeRecord();
+        rec.readFields(in);
+        return rec;
+    }
 }
+
+// Local Variables:
+// mode: java
+// c-basic-offset: 4
+// tab-width: 4
+// indent-tabs-mode: nil
+// End:
+// vim: softtabstop=4:shiftwidth=4:expandtab
