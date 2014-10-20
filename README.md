@@ -1,3 +1,27 @@
+# Aerospike Hadoop Connector
+
+This repository contains AerospikeInputFormat.java and AerospikeOutputFormat.java,
+and several examples of processing using Hadoop.
+
+The system allows putting WorkerNodes on Aerospike servers. By default,
+the AerospikeInputMapper will split according to the nodes on the cluster,
+avoiding network traffic. The InputMapper also supports using secondary indexes,
+thus pulling only a few of the records in the Aerospike database.
+
+Both new and old Hadoop interfaces are supported, and there are examples for both.
+
+In the case of using AerospikeOutputMapper, the Aerospike cluster is likely
+to be outside the Hadoop worker nodes. This allows immediate use of the Hadoop
+output in your application.
+
+Check out the examples. The classic word count examples are included - for both
+input and output. The "aggregate int example" uses a secondary index to pull
+data from Aerospike, and runs the InputFormat on the local node if available.
+
+The most interesting example is likely the session rollup example.
+In this example, the session management state is output to Aerospike
+as the sessions are found.
+
 Install Hadoop
 ----------------------------------------------------------------
 
