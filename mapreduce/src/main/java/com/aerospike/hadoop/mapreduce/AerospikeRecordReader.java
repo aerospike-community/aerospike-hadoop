@@ -173,7 +173,9 @@ public class AerospikeRecordReader
                                            numrangeEnd));
                     stmt.setBinNames(numrangeBin);
                     QueryPolicy queryPolicy = new QueryPolicy();
-                    RecordSet rs = client.query(queryPolicy, stmt);
+                    RecordSet rs = client.queryNode(queryPolicy,
+                                                    stmt,
+                                                    client.getNode(node));
                     isRunning = true;
                     try {
                         log.info("query starting");
