@@ -113,6 +113,8 @@ public class AerospikeRecordReader
             try {
                 AerospikeClient client = new AerospikeClient(host, port);
                 try {
+                    log.info(String.format("scanNode %s:%d:%s:%s",
+                                           host, port, namespace, setName));
                     ScanPolicy scanPolicy = new ScanPolicy();
                     CallBack cb = new CallBack();
                     log.info("scan starting");
@@ -161,16 +163,16 @@ public class AerospikeRecordReader
             try {
                 AerospikeClient client = new AerospikeClient(host, port);
                 try {
+                    log.info(String.format("queryNode %s:%d %s:%s:%s[%d:%d]",
+                                           host, port, namespace, setName,
+                                           numrangeBin, numrangeBegin,
+                                           numrangeEnd));
                     Statement stmt = new Statement();
                     stmt.setNamespace(namespace);
                     stmt.setSetName(setName);
                     stmt.setFilters(Filter.range(numrangeBin,
                                                  numrangeBegin,
                                                  numrangeEnd));
-                    log.info(String.format("range %s %d %d",
-                                           numrangeBin,
-                                           numrangeBegin,
-                                           numrangeEnd));
                     stmt.setBinNames(numrangeBin);
                     QueryPolicy queryPolicy = new QueryPolicy();
                     RecordSet rs = client.queryNode(queryPolicy,
