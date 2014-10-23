@@ -109,13 +109,27 @@ public class AerospikeInputFormat
                 for (int ii = 0; ii < nsplits; ii++) {
                     Node node = nodes[ii];
                     String nodeName = node.getName();
-                    Host nodehost = node.getHost();
+
+                    // We want to avoid 127.0.0.1 as a hostname
+                    // because this value will be transferred to a
+                    // different hadoop node to be processed.
+                    //
+                    Host[] aliases = node.getAliases();
+                    Host nodehost = aliases[0];
+                    if (aliases.length > 1) {
+                        for (int jj = 0; jj < aliases.length; ++jj) {
+                            if (!aliases[jj].name.equals("127.0.0.1")) {
+                                nodehost = aliases[jj];
+                                break;
+                            }
+                        }
+                    }
                     splits[ii] = new AerospikeSplit(oper, nodeName,
                                                     nodehost.name, nodehost.port,
                                                     namespace, setName,
                                                     numrangeBin, numrangeBegin,
                                                     numrangeEnd);
-                    log.info("split: " + node);
+                    log.info("split: " + splits[ii]);
                 }
                 return splits;
             }

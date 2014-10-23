@@ -127,7 +127,7 @@ public class AerospikeSplit
     }
 
     public String[] getLocations() throws IOException {
-        return new String[] {};
+        return new String[]{ host };
     }
 }
 
