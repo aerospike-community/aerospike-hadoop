@@ -42,10 +42,16 @@ Install Hadoop
     export HADOOP_PREFIX=/usr/local/hadoop
 
 
-Building
+Development Directory
 ----------------------------------------------------------------
 
-    cd ~/aerospike/aerospike-hadoop
+    export AEROSPIKE_HADOOP=~/aerospike/aerospike-hadoop
+
+
+Building w/ Gradle
+----------------------------------------------------------------
+
+    cd ${AEROSPIKE_HADOOP}
 
     # Build the mapreduce input and output connectors.
     ./gradlew :mapreduce:jar
@@ -55,6 +61,24 @@ Building
     ./gradlew :examples:aggregate_int_input:installApp
     ./gradlew :examples:word_count_output:installApp
     ./gradlew :examples:session_rollup:installApp
+
+
+Building w/ Maven (instead)
+----------------------------------------------------------------
+
+    cd ${AEROSPIKE_HADOOP}
+
+    # Build the mapreduce input and output connectors.
+    (cd mapreduce && mvn clean install)
+
+    # Build the sample data generator.
+    (cd sampledata && mvn clean package)
+
+    # Build the example programs.
+    (cd examples/word_count_input && mvn clean package)
+    (cd examples/aggregate_int_input && mvn clean package)
+    (cd examples/word_count_output && mvn clean package)
+    (cd examples/session_rollup && mvn clean package)
 
 
 Setup Target Input Text File
@@ -76,19 +100,17 @@ Start Aerospike
 Setup Sample Data in Aerospike for Input Examples
 ----------------------------------------------------------------
 
-    cd ~/aerospike/aerospike-hadoop
+    cd ${AEROSPIKE_HADOOP}/sampledata
 
     # Loads a text file for word_count_input demo.
-    ./gradlew sampledata:run \
-        -PappArgs="['localhost:3000:test:words:bin1', \
-                    'text-file', \
-                    '/tmp/input']"
+    java -jar build/libs/sampledata.jar \
+        localhost:3000:test:words:bin1 \
+        text-file \
+        /tmp/input
 
     # Generates sequential integers for aggregate_int_input demo.
-    ./gradlew sampledata:run \
-        -PappArgs="['localhost:3000:test:integers:bin1', \
-                    'seq-int', \
-                    '0', '100000']"
+    java -jar build/libs/sampledata.jar \
+        localhost:3000:test:integers:bin1 seq-int 0 100000
 
 
 Running Input Examples
@@ -110,7 +132,7 @@ Running Input Examples
     $HADOOP_PREFIX/bin/hdfs dfs -mkdir /tmp
 
     # Run the Hadoop job.
-    cd ~/aerospike/aerospike-hadoop
+    cd ${AEROSPIKE_HADOOP}
 
     # Run the word_count_input example (Old Hadoop API)
     $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
@@ -191,7 +213,7 @@ Running Output Examples
 ----------------------------------------------------------------
 
     # Run the Hadoop job.
-    cd ~/aerospike/aerospike-hadoop
+    cd ${AEROSPIKE_HADOOP}
 
     # Run the word_count_output example (Old Hadoop API)
     $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
