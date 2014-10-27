@@ -8,7 +8,7 @@ subprojects{
         compile "com.aerospike:aerospike-client:3.0.30"
         compile "org.apache.hadoop:hadoop-common:2.2.0"
         compile "org.apache.hadoop:hadoop-mapreduce-client-jobclient:2.2.0"
-        compile "joda-time:joda-time:2.+"
+        compile "joda-time:joda-time:2.5"
         compile "org.json:json:20140107"
     }
 }

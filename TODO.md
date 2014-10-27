@@ -3,8 +3,6 @@ General
 
 * Simple torture testing.
 
-* Add maven build support.
-
 * Secondary index histogram splits proposal.
 
 * Sunil's object all the way through example.

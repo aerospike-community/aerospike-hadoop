@@ -1,7 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'application'
 
-mainClassName = 'com.aerospike.hadoop.examples.wordcount.WordCountOutput'
+mainClassName = 'com.aerospike.hadoop.examples.wordcountoutput.WordCountOutput'
 
 jar {
     manifest {
