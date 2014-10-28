@@ -99,14 +99,16 @@ public class AerospikeRecordReader
         int port;
         String namespace;
         String setName;
+        String[] binNames;
 
         ASSCanReader(String node, String host, int port,
-                     String ns, String setName) {
+                     String ns, String setName, String[] binNames) {
             this.node = node;
             this.host = host;
             this.port = port;
             this.namespace = ns;
             this.setName = setName;
+            this.binNames = binNames;
         }
 
         public void run() {
@@ -119,7 +121,12 @@ public class AerospikeRecordReader
                     CallBack cb = new CallBack();
                     log.info("scan starting");
                     isRunning = true;
-                    client.scanNode(scanPolicy, node, namespace, setName, cb);
+                    if (binNames != null) 
+                        client.scanNode(scanPolicy, node, namespace, setName,
+                                        cb, binNames);
+                    else
+                        client.scanNode(scanPolicy, node, namespace, setName,
+                                        cb);
                     isFinished = true;
                     log.info("scan finished");
                 }
@@ -142,18 +149,20 @@ public class AerospikeRecordReader
         int port;
         String namespace;
         String setName;
+        String[] binNames;
         String numrangeBin;
         long numrangeBegin;
         long numrangeEnd;
 
         ASQueryReader(String node, String host, int port,
-                      String ns, String setName, String numrangeBin,
-                      long numrangeBegin, long numrangeEnd) {
+                      String ns, String setName, String[] binNames,
+                      String numrangeBin, long numrangeBegin, long numrangeEnd) {
             this.node = node;
             this.host = host;
             this.port = port;
             this.namespace = ns;
             this.setName = setName;
+            this.binNames = binNames;
             this.numrangeBin = numrangeBin;
             this.numrangeBegin = numrangeBegin;
             this.numrangeEnd = numrangeEnd;
@@ -170,10 +179,11 @@ public class AerospikeRecordReader
                     Statement stmt = new Statement();
                     stmt.setNamespace(namespace);
                     stmt.setSetName(setName);
+                    if (binNames != null)
+                        stmt.setBinNames(binNames);
                     stmt.setFilters(Filter.range(numrangeBin,
                                                  numrangeBegin,
                                                  numrangeEnd));
-                    stmt.setBinNames(numrangeBin);
                     QueryPolicy queryPolicy = new QueryPolicy();
                     RecordSet rs = client.queryNode(queryPolicy,
                                                     stmt,
@@ -224,16 +234,18 @@ public class AerospikeRecordReader
         final int port = split.getPort();
         final String namespace = split.getNameSpace();
         final String setName = split.getSetName();
+        final String[] binNames = split.getBinNames();
         this.numrangeBin = split.getNumRangeBin();
         this.numrangeBegin = split.getNumRangeBegin();
         this.numrangeEnd = split.getNumRangeEnd();
 
         if (type.equals("scan")) {
-            scanReader = new ASSCanReader(node, host, port, namespace, setName);
+            scanReader = new ASSCanReader(node, host, port, namespace,
+                                          setName, binNames);
             scanReader.start();
         } else if (type.equals("numrange")) {
             queryReader = new ASQueryReader(node, host, port, namespace,
-                                            setName, numrangeBin,
+                                            setName, binNames, numrangeBin,
                                             numrangeBegin, numrangeEnd);
             queryReader.start();
         }

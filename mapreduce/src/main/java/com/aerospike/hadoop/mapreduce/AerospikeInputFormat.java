@@ -85,6 +85,7 @@ public class AerospikeInputFormat
             int port = AerospikeConfigUtil.getInputPort(job);
             String namespace = AerospikeConfigUtil.getInputNamespace(job);
             String setName = AerospikeConfigUtil.getInputSetName(job);
+            String[] binNames = AerospikeConfigUtil.getInputBinNames(job);
             String numrangeBin = "";
             long numrangeBegin = 0;
             long numrangeEnd = 0;
@@ -126,7 +127,7 @@ public class AerospikeInputFormat
                     }
                     splits[ii] = new AerospikeSplit(oper, nodeName,
                                                     nodehost.name, nodehost.port,
-                                                    namespace, setName,
+                                                    namespace, setName, binNames,
                                                     numrangeBin, numrangeBegin,
                                                     numrangeEnd);
                     log.info("split: " + splits[ii]);

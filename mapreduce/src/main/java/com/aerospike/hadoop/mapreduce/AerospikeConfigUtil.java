@@ -34,6 +34,8 @@ public class AerospikeConfigUtil {
     public static final int DEFAULT_INPUT_PORT = 3000;
     public static final String INPUT_NAMESPACE = "aerospike.input.namespace";
     public static final String INPUT_SETNAME = "aerospike.input.setname";
+    public static final String INPUT_BINNAMES = "aerospike.input.binnames";
+    public static final String DEFAULT_INPUT_BINNAMES = "";
     public static final String INPUT_OPERATION = "aerospike.input.operation";
     public static final String DEFAULT_INPUT_OPERATION = "scan";
     public static final String INPUT_NUMRANGE_BIN = "aerospike.input.numrange.bin";
@@ -99,6 +101,20 @@ public class AerospikeConfigUtil {
         String setname = conf.get(INPUT_SETNAME);
         log.info("using " + INPUT_SETNAME + " = " + setname);
         return setname;
+    }
+
+    public static void setInputBinNames(Configuration conf, String bins) {
+        log.info("setting " + INPUT_BINNAMES + " to " + bins);
+        conf.set(INPUT_BINNAMES, bins);
+    }
+
+    public static String[] getInputBinNames(Configuration conf) {
+        String bins = conf.get(INPUT_BINNAMES);
+        log.info("using " + INPUT_BINNAMES + " = " + bins);
+        if (bins == null || bins.equals(""))
+            return null;
+        else
+            return bins.split(",");
     }
 
     public static void setInputOperation(Configuration conf, String operation) {

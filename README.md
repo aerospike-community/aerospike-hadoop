@@ -67,18 +67,7 @@ Building w/ Maven (instead)
 ----------------------------------------------------------------
 
     cd ${AEROSPIKE_HADOOP}
-
-    # Build the mapreduce input and output connectors.
-    (cd mapreduce && mvn clean install)
-
-    # Build the sample data generator.
-    (cd sampledata && mvn clean package)
-
-    # Build the example programs.
-    (cd examples/word_count_input && mvn clean package)
-    (cd examples/aggregate_int_input && mvn clean package)
-    (cd examples/word_count_output && mvn clean package)
-    (cd examples/session_rollup && mvn clean package)
+    mvn clean package
 
 
 Setup Target Input Text File
@@ -118,6 +107,8 @@ Running Input Examples
 
     export HADOOP_PREFIX=/usr/local/hadoop
 
+    cd ${AEROSPIKE_HADOOP}
+
     # Format HDFS
     rm -rf /tmp/hadoop-$USER/dfs/data
     $HADOOP_PREFIX/bin/hdfs namenode -format
@@ -155,6 +146,7 @@ Running Input Examples
         ./examples/aggregate_int_input/build/libs/aggregate_int_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
+        -D aerospike.input.binnames=bin1 \
         -D aerospike.input.operation=scan \
         /tmp/output
 
@@ -169,6 +161,7 @@ Running Input Examples
         ./examples/aggregate_int_input/build/libs/aggregate_int_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
+        -D aerospike.input.binnames=bin1,bin2 \
         -D aerospike.input.operation=numrange \
         -D aerospike.input.numrange.bin=bin1 \
         -D aerospike.input.numrange.begin=100 \
