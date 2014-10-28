@@ -3,11 +3,7 @@ General
 
 * Simple torture testing.
 
-* Secondary index histogram splits proposal.
-
 * Sunil's object all the way through example.
-
-* Select bins filter.
 
 * Hook up the Reporter interface.
 
