@@ -16,7 +16,7 @@
  * permissions and limitations under the License.
  */
 
-package com.aerospike.hadoop.examples.sessionrollup;
+package com.aerospike.hadoop.examples.generateprofiles;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -29,15 +29,12 @@ import java.util.regex.Pattern;
 import java.util.StringTokenizer;
 import java.util.UUID;
 
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -67,11 +64,9 @@ import com.aerospike.client.policy.WritePolicy;
 import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeRecordWriter;
 
-public class SessionRollup extends Configured implements Tool {
+public class GenerateProfiles extends Configured implements Tool {
 
-    private static final Log log = LogFactory.getLog(SessionRollup.class);
-
-    private static final long SESSION_GAP_MSEC = 20 * 60 * 1000;
+    private static final Log log = LogFactory.getLog(GenerateProfiles.class);
 
     // Sample line format:
     // 37518 - - [16/Jun/1998:02:48:36 +0000] \
@@ -80,17 +75,16 @@ public class SessionRollup extends Configured implements Tool {
     private static final String logEntryRegex = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+)";
     private static final Pattern pat = Pattern.compile(logEntryRegex);
 
-    private static final DateTimeFormatter dateTimeParser =
-        DateTimeFormat.forPattern("dd/MMM/yyyy:HH:mm:ss Z");
+    private final static IntWritable one = new IntWritable(1);
 
     public static class Map extends MapReduceBase implements
-        Mapper<LongWritable, Text, LongWritable, LongWritable> {
+         Mapper<LongWritable, Text, LongWritable, IntWritable> {
 
         int mapcount = 0;
 
         public void map(LongWritable key,
                         Text rec,
-                        OutputCollector<LongWritable, LongWritable> output,
+                        OutputCollector<LongWritable, IntWritable> output,
                         Reporter reporter) throws IOException {
             try {
                 String line = rec.toString();
@@ -99,141 +93,89 @@ public class SessionRollup extends Configured implements Tool {
                     throw new RuntimeException("match failed on: " + line);
                 }
                 long userid = Long.parseLong(matcher.group(1));
-                String tstamp = matcher.group(4);
-                DateTime datetime = dateTimeParser.parseDateTime(tstamp);
-                long msec = datetime.getMillis();
-                output.collect(new LongWritable(userid), new LongWritable(msec));
+                output.collect(new LongWritable(userid), one);
             }
             catch (Exception ex) {
-                // log.error("exception in map: " + ex);
+                // log.error("exception in map", ex);
             }
         }
     }
 
-    private static class Session implements Writable {
+    private static class Profile implements Writable {
         public long userid;
-        public long start;
-        public long end;
-        public int nhits;
+        public int age;
+        public int isMale;
 
-        public Session(long userid, long start, long end, int nhits) {
+        public Profile(long userid, int age, int isMale) {
             this.userid = userid;
-            this.start = start;
-            this.end = end;
-            this.nhits = nhits;
+            this.age = age;
+            this.isMale = isMale;
         }
 
         public void readFields(DataInput in) throws IOException {
             userid = in.readLong();
-            start = in.readLong();
-            end = in.readLong();
-            nhits = in.readInt();
+            age = in.readInt();
+            isMale = in.readInt();
         }
 
         public void write(DataOutput out) throws IOException {
             out.writeLong(userid);
-            out.writeLong(start);
-            out.writeLong(end);
-            out.writeInt(nhits);
+            out.writeInt(age);
+            out.writeInt(isMale);
         }
     }
 
     public static class Reduce
         extends MapReduceBase
-        implements Reducer<LongWritable, LongWritable, Text, Session> {
+        implements Reducer<LongWritable, IntWritable, LongWritable, Profile> {
                 
         public void reduce(LongWritable userid,
-                           Iterator<LongWritable> tstamps,
-                           OutputCollector<Text, Session> output,
+                           Iterator<IntWritable> ones,
+                           OutputCollector<LongWritable, Profile> output,
                            Reporter reporter
                            ) throws IOException {
 
-            // Copy the iterator to an array.
-            ArrayList<LongWritable> tsarray = new ArrayList<LongWritable>();
-            while (tstamps.hasNext())
-                tsarray.add(new LongWritable(tstamps.next().get()));
+            // Fake age based on userid.
+            int age = ((int) userid.get() % 40) + 20;
 
-            // Sort the timestamps.
-            Collections.sort(tsarray);
+            // Fake gender based on userid.
+            int isMale = (int) userid.get() % 2;
 
-            // Scan the array looking for session boundaries.
-            long t0 = 0;
-            long session_start = 0;
-            long session_end = 0;
-            int session_hits = 0;
-            for (LongWritable tstamp: tsarray) {
-                long tt = tstamp.get();
-
-                // How long since the prior hit?
-                long delta = tt - t0;
-
-                // Is this a new session?
-                if (delta > SESSION_GAP_MSEC) {
-
-                    // Is there a prior session?
-                    if (session_start != 0)
-                        collect_session(userid.get(), session_start, session_end,
-                                        session_hits, output);
-
-                    // Reset for the new session.
-                    session_start = tt;
-                    session_hits = 0;
-                }
-
-                // Extend the current session.
-                session_hits += 1;
-                session_end = tt;
-
-                // On to the next hit ...
-                t0 = tt;
-            }
-
-            // Write out the last session.
-            if (session_start != 0)
-                collect_session(userid.get(), session_start, session_end,
-                                session_hits, output);
-        }
-
-        private void collect_session(long userid, long start,
-                                     long end, int nhits,
-                                     OutputCollector<Text, Session> output)
-            throws IOException {
-            String sessid = UUID.randomUUID().toString();
-            Session session = new Session(userid, start, end, nhits);
-            output.collect(new Text(sessid), session);
+            Profile profile = new Profile(userid.get(), age, isMale);
+            output.collect(userid, profile);
         }
     }
 
-    public static class SessionOutputFormat
-        extends AerospikeOutputFormat<Text, Session> {
+    public static class ProfileOutputFormat
+        extends AerospikeOutputFormat<LongWritable, Profile> {
 
-        public static class SessionRecordWriter
-            extends AerospikeRecordWriter<Text, Session> {
+        public static class ProfileRecordWriter
+            extends AerospikeRecordWriter<LongWritable, Profile> {
 
-            public SessionRecordWriter(Configuration cfg,
+            public ProfileRecordWriter(Configuration cfg,
                                        Progressable progressable) {
                 super(cfg, progressable);
             }
 
             @Override
-            public void writeAerospike(Text sessid,
-                                       Session session,
+            public void writeAerospike(LongWritable userid,
+                                       Profile profile,
                                        AerospikeClient client,
                                        WritePolicy writePolicy,
                                        String namespace,
                                        String setName) throws IOException {
-                Key kk = new Key(namespace, setName, sessid.toString());
-                Bin bin0 = new Bin("userid", session.userid);
-                Bin bin1 = new Bin("start", session.start);
-                Bin bin2 = new Bin("end", session.end);
-                Bin bin3 = new Bin("nhits", session.nhits);
-                client.put(writePolicy, kk, bin0, bin1, bin2, bin3);
+                writePolicy.timeout = 5000;
+                Key kk = new Key(namespace, setName, userid.get());
+                Bin bin0 = new Bin("userid", profile.userid);
+                Bin bin1 = new Bin("age", profile.age);
+                Bin bin2 = new Bin("isMale", profile.isMale);
+                client.put(writePolicy, kk, bin0, bin1, bin2);
             }
         }
 
-        public RecordWriter<Text, Session>
+        public RecordWriter<LongWritable, Profile>
             getAerospikeRecordWriter(Configuration conf, Progressable prog) {
-            return new SessionRecordWriter(conf, prog);
+            return new ProfileRecordWriter(conf, prog);
         }
     }
 
@@ -243,18 +185,18 @@ public class SessionRollup extends Configured implements Tool {
 
         final Configuration conf = getConf();
 
-        JobConf job = new JobConf(conf, SessionRollup.class);
-        job.setJobName("AerospikeSessionRollup");
+        JobConf job = new JobConf(conf, GenerateProfiles.class);
+        job.setJobName("AerospikeGenerateProfiles");
 
         job.setMapperClass(Map.class);
         job.setMapOutputKeyClass(LongWritable.class);
-        job.setMapOutputValueClass(LongWritable.class);
+        job.setMapOutputValueClass(IntWritable.class);
         // job.setCombinerClass(Reduce.class);  // Reduce changes format.
         job.setReducerClass(Reduce.class);
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(Session.class);
+        job.setOutputValueClass(Profile.class);
 
-        job.setOutputFormat(SessionOutputFormat.class);
+        job.setOutputFormat(ProfileOutputFormat.class);
 
         for (int ii = 0; ii < args.length; ++ii)
             FileInputFormat.addInputPath(job, new Path(args[ii]));
@@ -266,7 +208,7 @@ public class SessionRollup extends Configured implements Tool {
     }
 
     public static void main(final String[] args) throws Exception {
-        System.exit(ToolRunner.run(new SessionRollup(), args));
+        System.exit(ToolRunner.run(new GenerateProfiles(), args));
     }
 }
 

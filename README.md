@@ -61,24 +61,15 @@ Building w/ Gradle
     ./gradlew :examples:aggregate_int_input:installApp
     ./gradlew :examples:word_count_output:installApp
     ./gradlew :examples:session_rollup:installApp
+    ./gradlew :examples:generate_profiles:installApp
+    ./gradlew :examples:external_join:installApp
 
 
 Building w/ Maven (instead)
 ----------------------------------------------------------------
 
     cd ${AEROSPIKE_HADOOP}
-
-    # Build the mapreduce input and output connectors.
-    (cd mapreduce && mvn clean install)
-
-    # Build the sample data generator.
-    (cd sampledata && mvn clean package)
-
-    # Build the example programs.
-    (cd examples/word_count_input && mvn clean package)
-    (cd examples/aggregate_int_input && mvn clean package)
-    (cd examples/word_count_output && mvn clean package)
-    (cd examples/session_rollup && mvn clean package)
+    mvn clean package
 
 
 Setup Target Input Text File
@@ -216,7 +207,6 @@ Running Output Examples
     cd ${AEROSPIKE_HADOOP}
 
     # Run the word_count_output example (Old Hadoop API)
-    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/word_count_output/build/libs/word_count_output.jar \
@@ -231,7 +221,6 @@ Running Output Examples
     # -- OR --
 
     # Run the session_rollup example (Old Hadoop API, small dataset)
-    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /tmp/output
     $HADOOP_PREFIX/bin/hadoop \
         jar \
         ./examples/session_rollup/build/libs/session_rollup.jar \
@@ -244,6 +233,42 @@ Running Output Examples
     # Inspect the results:
     ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
         -c 'SELECT * FROM test.sessions'
+
+
+    # -- OR --
+
+    # Run generate_profiles to build sample data for external_join.
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/generate_profiles/build/libs/generate_profiles.jar \
+        -D aerospike.output.namespace=test \
+        -D aerospike.output.setname=profiles \
+        -D mapred.reduce.tasks=30 \
+        /tmp/wc_day52_1.log \
+        /tmp/wc_day52_2.log
+
+    # Inspect the results:
+    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
+        -c 'SELECT * FROM test.profiles'
+
+
+    # -- AND --
+
+    # Run the external_join example (Old Hadoop API, small dataset)
+    $HADOOP_PREFIX/bin/hadoop \
+        jar \
+        ./examples/external_join/build/libs/external_join.jar \
+        -D aerospike.input.namespace=test \
+        -D aerospike.input.setname=profiles \
+        -D aerospike.output.namespace=test \
+        -D aerospike.output.setname=sessions2 \
+        -D mapred.reduce.tasks=30 \
+        /tmp/wc_day52_1.log \
+        /tmp/wc_day52_2.log
+
+    # Inspect the results:
+    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
+        -c 'SELECT * FROM test.sessions2'
 
 
 Done with HDFS

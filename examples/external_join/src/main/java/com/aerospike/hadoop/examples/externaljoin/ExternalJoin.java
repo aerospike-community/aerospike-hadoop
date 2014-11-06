@@ -16,7 +16,7 @@
  * permissions and limitations under the License.
  */
 
-package com.aerospike.hadoop.examples.sessionrollup;
+package com.aerospike.hadoop.examples.externaljoin;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -61,15 +61,18 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
+import com.aerospike.client.Record;
 import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.WritePolicy;
+import com.aerospike.client.policy.Policy;
 
 import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeRecordWriter;
+import com.aerospike.hadoop.mapreduce.AerospikeConfigUtil;
 
-public class SessionRollup extends Configured implements Tool {
+public class ExternalJoin extends Configured implements Tool {
 
-    private static final Log log = LogFactory.getLog(SessionRollup.class);
+    private static final Log log = LogFactory.getLog(ExternalJoin.class);
 
     private static final long SESSION_GAP_MSEC = 20 * 60 * 1000;
 
@@ -115,12 +118,16 @@ public class SessionRollup extends Configured implements Tool {
         public long start;
         public long end;
         public int nhits;
+        public int age;
+        public int isMale;
 
-        public Session(long userid, long start, long end, int nhits) {
+        public Session(long userid, long start, long end, int nhits, int age, int isMale) {
             this.userid = userid;
             this.start = start;
             this.end = end;
             this.nhits = nhits;
+            this.age = age;
+            this.isMale = isMale;
         }
 
         public void readFields(DataInput in) throws IOException {
@@ -128,6 +135,8 @@ public class SessionRollup extends Configured implements Tool {
             start = in.readLong();
             end = in.readLong();
             nhits = in.readInt();
+            age = in.readInt();
+            isMale = in.readInt();
         }
 
         public void write(DataOutput out) throws IOException {
@@ -135,13 +144,38 @@ public class SessionRollup extends Configured implements Tool {
             out.writeLong(start);
             out.writeLong(end);
             out.writeInt(nhits);
+            out.writeInt(age);
+            out.writeInt(isMale);
         }
     }
 
     public static class Reduce
         extends MapReduceBase
         implements Reducer<LongWritable, LongWritable, Text, Session> {
+
+        private Policy policy;
+        private AerospikeClient client;
+        private String namespace;
+        private String setName;
+
+        @Override
+        public void configure(JobConf job) {
+            String host = AerospikeConfigUtil.getInputHost(job);
+            int port = AerospikeConfigUtil.getInputPort(job);
+
+            policy = new Policy();
+            policy.timeout = 5000;
+            client = new AerospikeClient(host, port);
+
+            namespace = AerospikeConfigUtil.getInputNamespace(job);
+            setName = AerospikeConfigUtil.getInputSetName(job);
+        }
                 
+        @Override
+        public void close() {
+            client.close();
+        }
+
         public void reduce(LongWritable userid,
                            Iterator<LongWritable> tstamps,
                            OutputCollector<Text, Session> output,
@@ -199,7 +233,16 @@ public class SessionRollup extends Configured implements Tool {
                                      OutputCollector<Text, Session> output)
             throws IOException {
             String sessid = UUID.randomUUID().toString();
-            Session session = new Session(userid, start, end, nhits);
+
+            Key kk = new Key(namespace, setName, userid);
+            Record rec = client.get(policy, kk);
+
+            int age = (Integer) rec.bins.get("age");
+            int isMale = (Integer) rec.bins.get("isMale");
+
+            Session session =
+                new Session(userid, start, end, nhits, age, isMale);
+
             output.collect(new Text(sessid), session);
         }
     }
@@ -222,12 +265,15 @@ public class SessionRollup extends Configured implements Tool {
                                        WritePolicy writePolicy,
                                        String namespace,
                                        String setName) throws IOException {
+                writePolicy.timeout = 5000;
                 Key kk = new Key(namespace, setName, sessid.toString());
                 Bin bin0 = new Bin("userid", session.userid);
                 Bin bin1 = new Bin("start", session.start);
                 Bin bin2 = new Bin("end", session.end);
                 Bin bin3 = new Bin("nhits", session.nhits);
-                client.put(writePolicy, kk, bin0, bin1, bin2, bin3);
+                Bin bin4 = new Bin("age", session.age);
+                Bin bin5 = new Bin("isMale", session.isMale);
+                client.put(writePolicy, kk, bin0, bin1, bin2, bin3, bin4, bin5);
             }
         }
 
@@ -243,8 +289,8 @@ public class SessionRollup extends Configured implements Tool {
 
         final Configuration conf = getConf();
 
-        JobConf job = new JobConf(conf, SessionRollup.class);
-        job.setJobName("AerospikeSessionRollup");
+        JobConf job = new JobConf(conf, ExternalJoin.class);
+        job.setJobName("AerospikeExternalJoin");
 
         job.setMapperClass(Map.class);
         job.setMapOutputKeyClass(LongWritable.class);
@@ -266,7 +312,7 @@ public class SessionRollup extends Configured implements Tool {
     }
 
     public static void main(final String[] args) throws Exception {
-        System.exit(ToolRunner.run(new SessionRollup(), args));
+        System.exit(ToolRunner.run(new ExternalJoin(), args));
     }
 }
 

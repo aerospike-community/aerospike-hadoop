@@ -1,0 +1,11 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'com.aerospike.hadoop.examples.generateprofiles.GenerateProfiles'
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.aerospike.hadoop.examples.generateprofiles.GenerateProfiles'
+    }
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+}
