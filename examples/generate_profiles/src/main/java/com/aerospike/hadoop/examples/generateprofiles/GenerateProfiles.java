@@ -164,7 +164,7 @@ public class GenerateProfiles extends Configured implements Tool {
                                        WritePolicy writePolicy,
                                        String namespace,
                                        String setName) throws IOException {
-                writePolicy.timeout = 5000;
+                writePolicy.timeout = 10000;
                 Key kk = new Key(namespace, setName, userid.get());
                 Bin bin0 = new Bin("userid", profile.userid);
                 Bin bin1 = new Bin("age", profile.age);

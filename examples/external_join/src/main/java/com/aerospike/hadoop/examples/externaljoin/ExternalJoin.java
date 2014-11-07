@@ -21,20 +21,27 @@ package com.aerospike.hadoop.examples.externaljoin;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+
+import java.nio.ByteBuffer;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.StringTokenizer;
-import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -164,7 +171,7 @@ public class ExternalJoin extends Configured implements Tool {
             int port = AerospikeConfigUtil.getInputPort(job);
 
             policy = new Policy();
-            policy.timeout = 5000;
+            policy.timeout = 10000;
             client = new AerospikeClient(host, port);
 
             namespace = AerospikeConfigUtil.getInputNamespace(job);
@@ -232,7 +239,6 @@ public class ExternalJoin extends Configured implements Tool {
                                      long end, int nhits,
                                      OutputCollector<Text, Session> output)
             throws IOException {
-            String sessid = UUID.randomUUID().toString();
 
             Key kk = new Key(namespace, setName, userid);
             Record rec = client.get(policy, kk);
@@ -240,10 +246,21 @@ public class ExternalJoin extends Configured implements Tool {
             int age = (Integer) rec.bins.get("age");
             int isMale = (Integer) rec.bins.get("isMale");
 
-            Session session =
-                new Session(userid, start, end, nhits, age, isMale);
+            try {
+                // Generate a sessionid from the hash of the userid and start.
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                md.update(ByteBuffer.allocate(8).putLong(userid).array());
+                md.update(ByteBuffer.allocate(8).putLong(start).array());
+                String sessid = Hex.encodeHexString(md.digest()).substring(0,16);
 
-            output.collect(new Text(sessid), session);
+                Session session =
+                    new Session(userid, start, end, nhits, age, isMale);
+
+                output.collect(new Text(sessid), session);
+            }
+            catch (NoSuchAlgorithmException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -265,7 +282,7 @@ public class ExternalJoin extends Configured implements Tool {
                                        WritePolicy writePolicy,
                                        String namespace,
                                        String setName) throws IOException {
-                writePolicy.timeout = 5000;
+                writePolicy.timeout = 10000;
                 Key kk = new Key(namespace, setName, sessid.toString());
                 Bin bin0 = new Bin("userid", session.userid);
                 Bin bin1 = new Bin("start", session.start);
