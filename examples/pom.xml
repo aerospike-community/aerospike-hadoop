@@ -12,6 +12,8 @@
     <module>aggregate_int_input</module>
     <module>word_count_output</module>
     <module>session_rollup</module>
+    <module>generate_profiles</module>
+    <module>external_join</module>
   </modules>
 
 </project>
