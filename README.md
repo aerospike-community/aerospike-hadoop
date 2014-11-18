@@ -109,6 +109,8 @@ Running Input Examples
 
     export HADOOP_PREFIX=/usr/local/hadoop
 
+    cd ${AEROSPIKE_HADOOP}
+
     # Format HDFS
     rm -rf /tmp/hadoop-$USER/dfs/data
     $HADOOP_PREFIX/bin/hdfs namenode -format
@@ -146,6 +148,7 @@ Running Input Examples
         ./examples/aggregate_int_input/build/libs/aggregate_int_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
+        -D aerospike.input.binnames=bin1 \
         -D aerospike.input.operation=scan \
         /tmp/output
 
@@ -160,6 +163,7 @@ Running Input Examples
         ./examples/aggregate_int_input/build/libs/aggregate_int_input.jar \
         -D aerospike.input.namespace=test \
         -D aerospike.input.setname=integers \
+        -D aerospike.input.binnames=bin1,bin2 \
         -D aerospike.input.operation=numrange \
         -D aerospike.input.numrange.bin=bin1 \
         -D aerospike.input.numrange.begin=100 \
