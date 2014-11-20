@@ -14,6 +14,7 @@
     <module>session_rollup</module>
     <module>generate_profiles</module>
     <module>external_join</module>
+    <module>spark_session_rollup</module>
   </modules>
 
 </project>
