@@ -21,6 +21,8 @@ package com.aerospike.hadoop.examples.externaljoin;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 
 import java.nio.ByteBuffer;
 
@@ -29,14 +31,11 @@ import java.security.NoSuchAlgorithmException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.StringTokenizer;
-
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
@@ -90,8 +89,8 @@ public class ExternalJoin extends Configured implements Tool {
     private static final String logEntryRegex = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+)";
     private static final Pattern pat = Pattern.compile(logEntryRegex);
 
-    private static final DateTimeFormatter dateTimeParser =
-        DateTimeFormat.forPattern("dd/MMM/yyyy:HH:mm:ss Z");
+    private static final SimpleDateFormat dateTimeParser =
+        new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
 
     public static class Map extends MapReduceBase implements
         Mapper<LongWritable, Text, LongWritable, LongWritable> {
@@ -110,8 +109,9 @@ public class ExternalJoin extends Configured implements Tool {
                 }
                 long userid = Long.parseLong(matcher.group(1));
                 String tstamp = matcher.group(4);
-                DateTime datetime = dateTimeParser.parseDateTime(tstamp);
-                long msec = datetime.getMillis();
+                ParsePosition pos = new ParsePosition(0);
+                Date date = dateTimeParser.parse(tstamp, pos);
+                long msec = date.getTime();
                 output.collect(new LongWritable(userid), new LongWritable(msec));
             }
             catch (Exception ex) {
