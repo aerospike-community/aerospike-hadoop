@@ -90,7 +90,7 @@ public abstract class AerospikeRecordWriter<KK, VV>
         policy.password = "";
         policy.failIfNotConnected = true;
 
-        client = new AerospikeClient(policy, host, port);
+        client = AerospikeClientSingleton.getInstance(policy, host, port);
 
         writePolicy = new WritePolicy();
     }
@@ -109,8 +109,6 @@ public abstract class AerospikeRecordWriter<KK, VV>
     protected void doClose(Progressable progressable) {
         log.info("doClose");
         initialized = false;
-        if (client != null)
-            client.close();
     }
 }
 

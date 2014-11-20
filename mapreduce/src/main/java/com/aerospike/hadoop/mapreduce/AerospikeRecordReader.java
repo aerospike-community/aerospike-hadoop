@@ -37,6 +37,7 @@ import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.AerospikeException;
 import com.aerospike.client.AerospikeException.ScanTerminated;
 import com.aerospike.client.Key;
+import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.QueryPolicy;
 import com.aerospike.client.policy.ScanPolicy;
 import com.aerospike.client.query.Filter;
@@ -113,26 +114,24 @@ public class AerospikeRecordReader
 
         public void run() {
             try {
-                AerospikeClient client = new AerospikeClient(host, port);
-                try {
-                    log.info(String.format("scanNode %s:%d:%s:%s",
-                                           host, port, namespace, setName));
-                    ScanPolicy scanPolicy = new ScanPolicy();
-                    CallBack cb = new CallBack();
-                    log.info("scan starting");
-                    isRunning = true;
-                    if (binNames != null) 
-                        client.scanNode(scanPolicy, node, namespace, setName,
-                                        cb, binNames);
-                    else
-                        client.scanNode(scanPolicy, node, namespace, setName,
-                                        cb);
-                    isFinished = true;
-                    log.info("scan finished");
-                }
-                finally {
-                    client.close();
-                }
+                AerospikeClient client =
+                    AerospikeClientSingleton.getInstance(new ClientPolicy(),
+                                                         host, port);
+
+                log.info(String.format("scanNode %s:%d:%s:%s",
+                                       host, port, namespace, setName));
+                ScanPolicy scanPolicy = new ScanPolicy();
+                CallBack cb = new CallBack();
+                log.info("scan starting");
+                isRunning = true;
+                if (binNames != null) 
+                    client.scanNode(scanPolicy, node, namespace, setName,
+                                    cb, binNames);
+                else
+                    client.scanNode(scanPolicy, node, namespace, setName,
+                                    cb);
+                isFinished = true;
+                log.info("scan finished");
             }
             catch (Exception ex) {
                 log.error("exception in ASSCanReader.run: " + ex);
@@ -170,42 +169,39 @@ public class AerospikeRecordReader
 
         public void run() {
             try {
-                AerospikeClient client = new AerospikeClient(host, port);
+                AerospikeClient client =
+                    AerospikeClientSingleton.getInstance(new ClientPolicy(),
+                                                         host, port);
+                log.info(String.format("queryNode %s:%d %s:%s:%s[%d:%d]",
+                                       host, port, namespace, setName,
+                                       numrangeBin, numrangeBegin,
+                                       numrangeEnd));
+                Statement stmt = new Statement();
+                stmt.setNamespace(namespace);
+                stmt.setSetName(setName);
+                stmt.setFilters(Filter.range(numrangeBin,
+                                             numrangeBegin,
+                                             numrangeEnd));
+                if (binNames != null)
+                    stmt.setBinNames(binNames);
+                QueryPolicy queryPolicy = new QueryPolicy();
+                RecordSet rs = client.queryNode(queryPolicy,
+                                                stmt,
+                                                client.getNode(node));
+                isRunning = true;
                 try {
-                    log.info(String.format("queryNode %s:%d %s:%s:%s[%d:%d]",
-                                           host, port, namespace, setName,
-                                           numrangeBin, numrangeBegin,
-                                           numrangeEnd));
-                    Statement stmt = new Statement();
-                    stmt.setNamespace(namespace);
-                    stmt.setSetName(setName);
-                    if (binNames != null)
-                        stmt.setBinNames(binNames);
-                    stmt.setFilters(Filter.range(numrangeBin,
-                                                 numrangeBegin,
-                                                 numrangeEnd));
-                    QueryPolicy queryPolicy = new QueryPolicy();
-                    RecordSet rs = client.queryNode(queryPolicy,
-                                                    stmt,
-                                                    client.getNode(node));
-                    isRunning = true;
-                    try {
-                        log.info("query starting");
-                        while (rs.next()) {
-                            Key key = rs.getKey();
-                            Record record = rs.getRecord();
-                            queue.put(new KeyRecPair(new AerospikeKey(key),
-                                                     new AerospikeRecord(record)));
-                        }
-                    }
-                    finally {
-                        rs.close();
-                        isFinished = true;
-                        log.info("query finished");
+                    log.info("query starting");
+                    while (rs.next()) {
+                        Key key = rs.getKey();
+                        Record record = rs.getRecord();
+                        queue.put(new KeyRecPair(new AerospikeKey(key),
+                                                 new AerospikeRecord(record)));
                     }
                 }
                 finally {
-                    client.close();
+                    rs.close();
+                    isFinished = true;
+                    log.info("query finished");
                 }
             }
             catch (Exception ex) {

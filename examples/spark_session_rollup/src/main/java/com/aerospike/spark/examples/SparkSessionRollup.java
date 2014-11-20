@@ -62,6 +62,7 @@ import com.aerospike.client.policy.WritePolicy;
 import com.aerospike.hadoop.mapreduce.AerospikeConfigUtil;
 import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeRecordWriter;
+import com.aerospike.hadoop.mapreduce.AerospikeLogger;
 
 public class SparkSessionRollup {
 
@@ -208,7 +209,6 @@ public class SparkSessionRollup {
                                        WritePolicy writePolicy,
                                        String namespace,
                                        String setName) throws IOException {
-                writePolicy.timeout = 120000;
                 Key kk = new Key(namespace, setName, sessid.toString());
                 Bin bin0 = new Bin("userid", session.userid);
                 Bin bin1 = new Bin("start", session.start);
@@ -225,6 +225,8 @@ public class SparkSessionRollup {
     }
 
     public static void main(String[] args) {
+        com.aerospike.client.Log.setCallback(new AerospikeLogger());
+        com.aerospike.client.Log.setLevel(com.aerospike.client.Log.Level.DEBUG);
         
         SparkConf conf = new SparkConf()
             .setAppName(appName)

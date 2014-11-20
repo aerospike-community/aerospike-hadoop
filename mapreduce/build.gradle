@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'application'
 
 dependencies {
-  compile "com.aerospike:aerospike-client:3.0.30"
+  compile "com.aerospike:aerospike-client:3.0.31"
   compile "org.apache.hadoop:hadoop-common:2.2.0"
   compile "org.apache.hadoop:hadoop-mapreduce-client-jobclient:2.2.0"
 }
