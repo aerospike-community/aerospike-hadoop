@@ -274,6 +274,19 @@ Running Output Examples
     ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
         -c 'SELECT * FROM test.sessions2'
 
+Running the Spark Session Rollup Example
+----------------------------------------------------------------
+
+    # Build the example
+    cd ${AEROSPIKE_HADOOP}/examples/spark_session_rollup
+    mvn clean package
+
+    # Run the example    
+    java -jar build/libs/spark_session_rollup-1.0.0-driver.jar
+
+    # Inspect the results:
+    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
+        -c 'SELECT * FROM test.sessions3'
 
 Done with HDFS
 ----------------------------------------------------------------
