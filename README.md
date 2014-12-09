@@ -190,12 +190,14 @@ Setup Sample Data in HDFS for Output Examples
     $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal /tmp/input /tmp/words
 
     # Load the World Cup log data into HDFS
-    $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/wc_day52_1.log
-    $HADOOP_PREFIX/bin/hdfs dfs -rm /tmp/wc_day52_2.log
+    $HADOOP_PREFIX/bin/hdfs dfs -rm -r /worldcup
+    $HADOOP_PREFIX/bin/hdfs dfs -mkdir /worldcup
     $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal \
-        $HOME/aerospike/doc/data/WorldCup/wc_day52_1.log /tmp/wc_day52_1.log
+        $HOME/aerospike/doc/data/WorldCup/wc_day52_1.log \
+        /worldcup/wc_day52_1.log
     $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal \
-        $HOME/aerospike/doc/data/WorldCup/wc_day52_2.log /tmp/wc_day52_2.log
+        $HOME/aerospike/doc/data/WorldCup/wc_day52_2.log \
+        /worldcup/wc_day52_2.log
 
     # Create the secondary indexes in Aerospike.
     ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
@@ -231,13 +233,12 @@ Running Output Examples
         -D aerospike.output.namespace=test \
         -D aerospike.output.setname=sessions \
         -D mapred.reduce.tasks=30 \
-        /tmp/wc_day52_1.log \
-        /tmp/wc_day52_2.log
+        /worldcup/wc_day52_1.log \
+        /worldcup/wc_day52_2.log
 
     # Inspect the results:
     ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
         -c 'SELECT * FROM test.sessions'
-
 
     # -- OR --
 
@@ -248,13 +249,12 @@ Running Output Examples
         -D aerospike.output.namespace=test \
         -D aerospike.output.setname=profiles \
         -D mapred.reduce.tasks=30 \
-        /tmp/wc_day52_1.log \
-        /tmp/wc_day52_2.log
+        /worldcup/wc_day52_1.log \
+        /worldcup/wc_day52_2.log
 
     # Inspect the results:
     ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
         -c 'SELECT * FROM test.profiles'
-
 
     # -- AND --
 
@@ -267,8 +267,8 @@ Running Output Examples
         -D aerospike.output.namespace=test \
         -D aerospike.output.setname=sessions2 \
         -D mapred.reduce.tasks=30 \
-        /tmp/wc_day52_1.log \
-        /tmp/wc_day52_2.log
+        /worldcup/wc_day52_1.log \
+        /worldcup/wc_day52_2.log
 
     # Inspect the results:
     ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
@@ -277,9 +277,9 @@ Running Output Examples
 Running the Spark Session Rollup Example
 ----------------------------------------------------------------
 
-    # Build the example
+    # Start Spark.
+
     cd ${AEROSPIKE_HADOOP}/examples/spark_session_rollup
-    mvn clean package
 
     # Run the example    
     java -jar build/libs/spark_session_rollup-1.0.0-driver.jar
@@ -287,6 +287,9 @@ Running the Spark Session Rollup Example
     # Inspect the results:
     ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
         -c 'SELECT * FROM test.sessions3'
+
+    # Stop Spark.
+
 
 Done with HDFS
 ----------------------------------------------------------------
