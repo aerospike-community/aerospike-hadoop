@@ -67,7 +67,7 @@ import com.aerospike.hadoop.mapreduce.AerospikeLogger;
 public class SparkSessionRollup {
 
     public static final String appName = "spark_session_rollup";
-    public static final String master = "spark://localhost:7077";
+    public static final String master = "spark://as0:7077";
 
     public static class ExtractHits
         implements PairFunction<String, Long, Long> {
@@ -235,7 +235,7 @@ public class SparkSessionRollup {
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.addJar("build/libs/spark_session_rollup-1.0.0-worker.jar");
 
-        JavaRDD<String> entries = sc.textFile("hdfs://localhost:9000/worldcup");
+        JavaRDD<String> entries = sc.textFile("hdfs://as0:9000/worldcup");
 
         JavaPairRDD<Long, Iterable<Long>> userhits =
             entries.mapToPair(new ExtractHits()).groupByKey();
