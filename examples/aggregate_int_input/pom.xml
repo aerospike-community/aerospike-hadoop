@@ -27,13 +27,13 @@
     <dependency>
       <groupId>com.aerospike</groupId>
       <artifactId>aerospike-client</artifactId>
-      <version>3.0.31</version>
+      <version>3.3.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.aerospike</groupId>
       <artifactId>aerospike-mapreduce</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.1</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

@@ -19,33 +19,28 @@
 package com.aerospike.hadoop.mapreduce;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.hadoop.conf.Configuration;
-
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
-
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Reporter;
-
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.AerospikeException;
-import com.aerospike.client.cluster.Node;
 import com.aerospike.client.Host;
+import com.aerospike.client.cluster.Node;
 import com.aerospike.client.policy.ClientPolicy;
-import com.aerospike.client.policy.ScanPolicy;
 
 /**
  * An {@link InputFormat} for data stored in an Aerospike database.
@@ -116,12 +111,12 @@ public class AerospikeInputFormat
                 // because this value will be transferred to a
                 // different hadoop node to be processed.
                 //
-                Host[] aliases = node.getAliases();
-                Host nodehost = aliases[0];
-                if (aliases.length > 1) {
-                    for (int jj = 0; jj < aliases.length; ++jj) {
-                        if (!aliases[jj].name.equals("127.0.0.1")) {
-                            nodehost = aliases[jj];
+                List<Host> aliases = getAliases(node.getHost());
+                Host nodehost = aliases.get(0);
+                if (aliases.size() > 1) {
+                    for (Host a : aliases) {
+                        if (!a.name.equals("127.0.0.1")) {
+                            nodehost = a;
                             break;
                         }
                     }
@@ -147,6 +142,30 @@ public class AerospikeInputFormat
                         ) throws IOException {
         return new AerospikeRecordReader((AerospikeSplit) split);
     }
+
+	private List<Host> getAliases(Host host) {
+		InetAddress[] addresses;
+		
+		try {
+			addresses = InetAddress.getAllByName(host.name);
+		}
+		catch (UnknownHostException uhe) {
+			throw new AerospikeException.Connection("Invalid host: " + host);
+		}
+			
+		if (addresses.length == 0) {
+			throw new AerospikeException.Connection("Failed to find addresses for " + host);
+		}
+		
+		// Add capacity for current address aliases plus IPV6 address and hostname.
+		List<Host> aliases = new ArrayList<Host>(addresses.length + 2);
+		
+		for (InetAddress address : addresses) {
+			aliases.add(new Host(address.getHostAddress(), host.tlsName, host.port));
+		}
+		
+		return aliases;
+	}
 
 }
 
