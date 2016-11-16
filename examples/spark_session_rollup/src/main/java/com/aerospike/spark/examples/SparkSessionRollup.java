@@ -233,9 +233,9 @@ public class SparkSessionRollup {
             .set("spark.executor.memory", "2g")
             .setMaster(master);
         JavaSparkContext sc = new JavaSparkContext(conf);
-        sc.addJar("build/libs/spark_session_rollup-1.0.0-worker.jar");
+        sc.addJar("build/libs/spark_session_rollup.jar");
 
-        JavaRDD<String> entries = sc.textFile("hdfs://as0:9000/worldcup");
+        JavaRDD<String> entries = sc.textFile("hdfs://localhost/tmp/input");
 
         JavaPairRDD<Long, Iterable<Long>> userhits =
             entries.mapToPair(new ExtractHits()).groupByKey();
