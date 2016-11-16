@@ -3,6 +3,21 @@ apply plugin: 'application'
 
 mainClassName = 'com.aerospike.hadoop.sampledata.SampleData'
 
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile "com.aerospike:aerospike-client:3.3.0"
+  compile "org.apache.hadoop:hadoop-common:2.7.2"
+}
+
+run {  
+    if ( project.hasProperty("appArgs") ) {  
+        args Eval.me(appArgs)  
+    }  
+}
+
 jar {
     manifest {
         attributes 'Main-Class': 'com.aerospike.hadoop.sampledata.SampleData'
