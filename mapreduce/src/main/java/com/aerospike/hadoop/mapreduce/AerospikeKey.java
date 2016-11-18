@@ -22,7 +22,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import org.apache.hadoop.io.BinaryComparable;
 import org.apache.hadoop.io.WritableComparable;
 
 import com.aerospike.client.Key;
@@ -30,7 +29,7 @@ import com.aerospike.client.Value;
 import com.aerospike.client.util.Packer;
 import com.aerospike.client.util.Unpacker.ObjectUnpacker;
 
-public class AerospikeKey   implements WritableComparable {
+public class AerospikeKey   implements WritableComparable<AerospikeKey> {
 
     public String namespace;
     public String setName;
@@ -125,8 +124,7 @@ public class AerospikeKey   implements WritableComparable {
         return key;
     }
 
-    public int compareTo(Object obj) {
-        AerospikeKey other = (AerospikeKey) obj;
+    public int compareTo(AerospikeKey other) {
         byte[] left = this.digest;
         byte[] right = other.digest;
         for (int i = 0, j = 0; i < left.length && j < right.length; i++, j++) {

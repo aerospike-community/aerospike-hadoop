@@ -21,7 +21,7 @@ package com.aerospike.hadoop.mapreduce;
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.policy.ClientPolicy;
 
-public class AerospikeClientSingleton {
+public final class AerospikeClientSingleton {
 
     private static volatile AerospikeClient instance = null;
  
