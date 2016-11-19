@@ -83,7 +83,7 @@ public class SessionRollup extends Configured implements Tool {
     // 37518 - - [16/Jun/1998:02:48:36 +0000] \
     // "GET /images/hm_hola.gif HTTP/1.0" 200 2240
 
-    private static final String logEntryRegex = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+)";
+    private static final String logEntryRegex = "^([\\w.-]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+)";
     private static final Pattern pat = Pattern.compile(logEntryRegex);
 
     private static final SimpleDateFormat dateTimeParser =
@@ -104,7 +104,8 @@ public class SessionRollup extends Configured implements Tool {
                 if (!matcher.matches() || 7 != matcher.groupCount()) {
                     throw new RuntimeException("match failed on: " + line);
                 }
-                long userid = Long.parseLong(matcher.group(1));
+    			long userid = 10001;
+    			try{userid = Long.parseLong(matcher.group(7));}catch(Exception e){}
                 String tstamp = matcher.group(4);
                 ParsePosition pos = new ParsePosition(0);
                 Date date = dateTimeParser.parse(tstamp, pos);
