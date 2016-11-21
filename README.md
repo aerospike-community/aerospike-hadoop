@@ -51,6 +51,7 @@ Build w/ Gradle
     ./gradlew :mapreduce:jar
 
     # Build the example programs.
+    ./gradlew :sampledata:installApp
     ./gradlew :examples:word_count_input:installApp
     ./gradlew :examples:aggregate_int_input:installApp
     ./gradlew :examples:word_count_output:installApp
@@ -248,7 +249,7 @@ Run Output Examples
 
     # Inspect the results:
     aql -c 'SELECT * FROM test.sessions2'
-
+./gradlew :examples:word_count_input:installApp
 
 Done with HDFS
 ----------------------------------------------------------------
