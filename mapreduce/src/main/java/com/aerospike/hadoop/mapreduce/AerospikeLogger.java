@@ -21,12 +21,14 @@ package com.aerospike.hadoop.mapreduce;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.aerospike.client.Log.Level;
+
 public class AerospikeLogger implements com.aerospike.client.Log.Callback {
 
     private static final Log log = LogFactory.getLog(AerospikeLogger.class);
 
 	@Override
-	public void log(com.aerospike.client.Log.Level level, String message) {
+	public void log(Level level, String message) {
         switch (level) {
         case ERROR:
             log.error(message);

@@ -28,89 +28,70 @@ public class AerospikeConfigUtil {
 
     // ---------------- INPUT ----------------
 
-    public static final String INPUT_HOST = "aerospike.input.host";
-    public static final String DEFAULT_INPUT_HOST = "localhost";
-    public static final String INPUT_PORT = "aerospike.input.port";
     public static final int DEFAULT_INPUT_PORT = 3000;
-    public static final String INPUT_NAMESPACE = "aerospike.input.namespace";
-    public static final String INPUT_SETNAME = "aerospike.input.setname";
-    public static final String INPUT_BINNAMES = "aerospike.input.binnames";
-    public static final String DEFAULT_INPUT_BINNAMES = "";
-    public static final String INPUT_OPERATION = "aerospike.input.operation";
-    public static final String DEFAULT_INPUT_OPERATION = "scan";
-    public static final String INPUT_NUMRANGE_BIN = "aerospike.input.numrange.bin";
-    public static final String INPUT_NUMRANGE_BEGIN = "aerospike.input.numrange.begin";
-    public static final String INPUT_NUMRANGE_END = "aerospike.input.numrange.end";
     public static final long INVALID_LONG = 762492121482318889L;
 
     // ---------------- OUTPUT ----------------
 
-    public static final String OUTPUT_HOST = "aerospike.output.host";
-    public static final String DEFAULT_OUTPUT_HOST = "localhost";
-    public static final String OUTPUT_PORT = "aerospike.output.port";
     public static final int DEFAULT_OUTPUT_PORT = 3000;
-    public static final String OUTPUT_NAMESPACE = "aerospike.output.namespace";
-    public static final String OUTPUT_SETNAME = "aerospike.output.setname";
-    public static final String OUTPUT_BINNAME = "aerospike.output.binname";
-    public static final String OUTPUT_KEYNAME = "aerospike.output.keyname";
 
     // ---------------- INPUT ----------------
 
     public static void setInputHost(Configuration conf, String host) {
-        log.info("setting " + INPUT_HOST + " to " + host);
-        conf.set(INPUT_HOST, host);
+        log.info("setting " + AerospikeConfigEnum.INPUT_HOST.value + " to " + host);
+        conf.set(AerospikeConfigEnum.INPUT_HOST.value, host);
     }
 
     public static String getInputHost(Configuration conf) {
-        String host = conf.get(INPUT_HOST, DEFAULT_INPUT_HOST);
-        log.info("using " + INPUT_HOST + " = " + host);
+        String host = conf.get(AerospikeConfigEnum.INPUT_HOST.value, AerospikeConfigEnum.DEFAULT_INPUT_HOST.value);
+        log.info("using " + AerospikeConfigEnum.INPUT_HOST.value + " = " + host);
         return host;
     }
 
     public static void setInputPort(Configuration conf, int port) {
-        log.info("setting " + INPUT_PORT + " to " + port);
-        conf.setInt(INPUT_PORT, port);
+        log.info("setting " + AerospikeConfigEnum.INPUT_PORT.value + " to " + port);
+        conf.setInt(AerospikeConfigEnum.INPUT_PORT.value, port);
     }
 
     public static int getInputPort(Configuration conf) {
-        int port = conf.getInt(INPUT_PORT, DEFAULT_INPUT_PORT);
-        log.info("using " + INPUT_PORT + " = " + port);
+        int port = conf.getInt(AerospikeConfigEnum.INPUT_PORT.value, DEFAULT_INPUT_PORT);
+        log.info("using " + AerospikeConfigEnum.INPUT_PORT.value + " = " + port);
         return port;
     }
 
     public static void setInputNamespace(Configuration conf, String namespace) {
-        log.info("setting " + INPUT_NAMESPACE + " to " + namespace);
-        conf.set(INPUT_NAMESPACE, namespace);
+        log.info("setting " + AerospikeConfigEnum.INPUT_NAMESPACE.value + " to " + namespace);
+        conf.set(AerospikeConfigEnum.INPUT_NAMESPACE.value, namespace);
     }
 
     public static String getInputNamespace(Configuration conf) {
-        String namespace = conf.get(INPUT_NAMESPACE);
+        String namespace = conf.get(AerospikeConfigEnum.INPUT_NAMESPACE.value);
         if (namespace == null)
             throw new UnsupportedOperationException
                 ("you must set the input namespace");
-        log.info("using " + INPUT_NAMESPACE + " = " + namespace);
+        log.info("using " + AerospikeConfigEnum.INPUT_NAMESPACE.value + " = " + namespace);
         return namespace;
     }
 
     public static void setInputSetName(Configuration conf, String setname) {
-        log.info("setting " + INPUT_SETNAME + " to " + setname);
-        conf.set(INPUT_SETNAME, setname);
+        log.info("setting " + AerospikeConfigEnum.INPUT_SETNAME.value + " to " + setname);
+        conf.set(AerospikeConfigEnum.INPUT_SETNAME.value, setname);
     }
 
     public static String getInputSetName(Configuration conf) {
-        String setname = conf.get(INPUT_SETNAME);
-        log.info("using " + INPUT_SETNAME + " = " + setname);
+        String setname = conf.get(AerospikeConfigEnum.INPUT_SETNAME.value);
+        log.info("using " + AerospikeConfigEnum.INPUT_SETNAME.value + " = " + setname);
         return setname;
     }
 
     public static void setInputBinNames(Configuration conf, String bins) {
-        log.info("setting " + INPUT_BINNAMES + " to " + bins);
-        conf.set(INPUT_BINNAMES, bins);
+        log.info("setting " + AerospikeConfigEnum.INPUT_BINNAMES.value + " to " + bins);
+        conf.set(AerospikeConfigEnum.INPUT_BINNAMES.value, bins);
     }
 
     public static String[] getInputBinNames(Configuration conf) {
-        String bins = conf.get(INPUT_BINNAMES);
-        log.info("using " + INPUT_BINNAMES + " = " + bins);
+        String bins = conf.get(AerospikeConfigEnum.INPUT_BINNAMES.value);
+        log.info("using " + AerospikeConfigEnum.INPUT_BINNAMES.value + " = " + bins);
         if (bins == null || bins.equals(""))
             return null;
         else
@@ -122,127 +103,127 @@ public class AerospikeConfigUtil {
                 !operation.equals("numrange"))
             throw new UnsupportedOperationException
                 ("input operation must be 'scan' or 'numrange'");
-        log.info("setting " + INPUT_OPERATION + " to " + operation);
-        conf.set(INPUT_OPERATION, operation);
+        log.info("setting " + AerospikeConfigEnum.INPUT_OPERATION.value + " to " + operation);
+        conf.set(AerospikeConfigEnum.INPUT_OPERATION.value, operation);
     }
 
     public static String getInputOperation(Configuration conf) {
-        String operation = conf.get(INPUT_OPERATION, DEFAULT_INPUT_OPERATION);
+        String operation = conf.get(AerospikeConfigEnum.INPUT_OPERATION.value, AerospikeConfigEnum.DEFAULT_INPUT_OPERATION.value);
         if (!operation.equals("scan") &&
                 !operation.equals("numrange"))
             throw new UnsupportedOperationException
                 ("input operation must be 'scan' or 'numrange'");
-        log.info("using " + INPUT_OPERATION + " = " + operation);
+        log.info("using " + AerospikeConfigEnum.INPUT_OPERATION.value + " = " + operation);
         return operation;
     }
 
     public static void setInputNumRangeBin(Configuration conf, String binname) {
-        log.info("setting " + INPUT_NUMRANGE_BIN + " to " + binname);
-        conf.set(INPUT_NUMRANGE_BIN, binname);
+        log.info("setting " + AerospikeConfigEnum.INPUT_NUMRANGE_BIN.value + " to " + binname);
+        conf.set(AerospikeConfigEnum.INPUT_NUMRANGE_BIN.value, binname);
     }
 
     public static String getInputNumRangeBin(Configuration conf) {
-        String binname = conf.get(INPUT_NUMRANGE_BIN);
-        log.info("using " + INPUT_NUMRANGE_BIN + " = " + binname);
+        String binname = conf.get(AerospikeConfigEnum.INPUT_NUMRANGE_BIN.value);
+        log.info("using " + AerospikeConfigEnum.INPUT_NUMRANGE_BIN.value + " = " + binname);
         return binname;
     }
 
     public static void setInputNumRangeBegin(Configuration conf, long begin) {
-        log.info("setting " + INPUT_NUMRANGE_BEGIN + " to " + begin);
-        conf.setLong(INPUT_NUMRANGE_BEGIN, begin);
+        log.info("setting " + AerospikeConfigEnum.INPUT_NUMRANGE_BEGIN.value + " to " + begin);
+        conf.setLong(AerospikeConfigEnum.INPUT_NUMRANGE_BEGIN.value, begin);
     }
 
     public static long getInputNumRangeBegin(Configuration conf) {
-        long begin = conf.getLong(INPUT_NUMRANGE_BEGIN, INVALID_LONG);
+        long begin = conf.getLong(AerospikeConfigEnum.INPUT_NUMRANGE_BEGIN.value, INVALID_LONG);
         if (begin == INVALID_LONG && getInputOperation(conf).equals("numrange"))
             throw new UnsupportedOperationException
                 ("missing input numrange begin");
-        log.info("using " + INPUT_NUMRANGE_BEGIN + " = " + begin);
+        log.info("using " + AerospikeConfigEnum.INPUT_NUMRANGE_BEGIN.value + " = " + begin);
         return begin;
     }
 
     public static void setInputNumRangeEnd(Configuration conf, long end) {
-        log.info("setting " + INPUT_NUMRANGE_END + " to " + end);
-        conf.setLong(INPUT_NUMRANGE_END, end);
+        log.info("setting " + AerospikeConfigEnum.INPUT_NUMRANGE_END.value + " to " + end);
+        conf.setLong(AerospikeConfigEnum.INPUT_NUMRANGE_END.value, end);
     }
 
     public static long getInputNumRangeEnd(Configuration conf) {
-        long end = conf.getLong(INPUT_NUMRANGE_END, INVALID_LONG);
+        long end = conf.getLong(AerospikeConfigEnum.INPUT_NUMRANGE_END.value, INVALID_LONG);
         if (end == INVALID_LONG && getInputOperation(conf).equals("numrange"))
             throw new UnsupportedOperationException
                 ("missing input numrange end");
-        log.info("using " + INPUT_NUMRANGE_END + " = " + end);
+        log.info("using " + AerospikeConfigEnum.INPUT_NUMRANGE_END.value + " = " + end);
         return end;
     }
 
     // ---------------- OUTPUT ----------------
 
     public static void setOutputHost(Configuration conf, String host) {
-        log.info("setting " + OUTPUT_HOST + " to " + host);
-        conf.set(OUTPUT_HOST, host);
+        log.info("setting " + AerospikeConfigEnum.OUTPUT_HOST.value + " to " + host);
+        conf.set(AerospikeConfigEnum.OUTPUT_HOST.value, host);
     }
 
     public static String getOutputHost(Configuration conf) {
-        String host = conf.get(OUTPUT_HOST, DEFAULT_OUTPUT_HOST);
-        log.info("using " + OUTPUT_HOST + " = " + host);
+        String host = conf.get(AerospikeConfigEnum.OUTPUT_HOST.value, AerospikeConfigEnum.DEFAULT_OUTPUT_HOST.value);
+        log.info("using " + AerospikeConfigEnum.OUTPUT_HOST.value + " = " + host);
         return host;
     }
 
     public static void setOutputPort(Configuration conf, int port) {
-        log.info("setting " + OUTPUT_PORT + " to " + port);
-        conf.setInt(OUTPUT_PORT, port);
+        log.info("setting " + AerospikeConfigEnum.OUTPUT_PORT.value + " to " + port);
+        conf.setInt(AerospikeConfigEnum.OUTPUT_PORT.value, port);
     }
 
     public static int getOutputPort(Configuration conf) {
-        int port = conf.getInt(OUTPUT_PORT, DEFAULT_OUTPUT_PORT);
-        log.info("using " + OUTPUT_PORT + " = " + port);
+        int port = conf.getInt(AerospikeConfigEnum.OUTPUT_PORT.value, DEFAULT_OUTPUT_PORT);
+        log.info("using " + AerospikeConfigEnum.OUTPUT_PORT.value + " = " + port);
         return port;
     }
 
     public static void setOutputNamespace(Configuration conf, String namespace) {
-        log.info("setting " + OUTPUT_NAMESPACE + " to " + namespace);
-        conf.set(OUTPUT_NAMESPACE, namespace);
+        log.info("setting " + AerospikeConfigEnum.OUTPUT_NAMESPACE.value + " to " + namespace);
+        conf.set(AerospikeConfigEnum.OUTPUT_NAMESPACE.value, namespace);
     }
 
     public static String getOutputNamespace(Configuration conf) {
-        String namespace = conf.get(OUTPUT_NAMESPACE);
+        String namespace = conf.get(AerospikeConfigEnum.OUTPUT_NAMESPACE.value);
         if (namespace == null)
             throw new UnsupportedOperationException
                 ("you must set the output namespace");
-        log.info("using " + OUTPUT_NAMESPACE + " = " + namespace);
+        log.info("using " + AerospikeConfigEnum.OUTPUT_NAMESPACE.value + " = " + namespace);
         return namespace;
     }
 
     public static void setOutputSetName(Configuration conf, String setname) {
-        log.info("setting " + OUTPUT_SETNAME + " to " + setname);
-        conf.set(OUTPUT_SETNAME, setname);
+        log.info("setting " + AerospikeConfigEnum.OUTPUT_SETNAME.value + " to " + setname);
+        conf.set(AerospikeConfigEnum.OUTPUT_SETNAME.value, setname);
     }
 
     public static String getOutputSetName(Configuration conf) {
-        String setname = conf.get(OUTPUT_SETNAME);
-        log.info("using " + OUTPUT_SETNAME + " = " + setname);
+        String setname = conf.get(AerospikeConfigEnum.OUTPUT_SETNAME.value);
+        log.info("using " + AerospikeConfigEnum.OUTPUT_SETNAME.value + " = " + setname);
         return setname;
     }
 
     public static void setOutputBinName(Configuration conf, String binname) {
-        log.info("setting " + OUTPUT_BINNAME + " to " + binname);
-        conf.set(OUTPUT_BINNAME, binname);
+        log.info("setting " + AerospikeConfigEnum.OUTPUT_BINNAME.value + " to " + binname);
+        conf.set(AerospikeConfigEnum.OUTPUT_BINNAME.value, binname);
     }
 
     public static String getOutputBinName(Configuration conf) {
-        String binname = conf.get(OUTPUT_BINNAME);
-        log.info("using " + OUTPUT_BINNAME + " = " + binname);
+        String binname = conf.get(AerospikeConfigEnum.OUTPUT_BINNAME.value);
+        log.info("using " + AerospikeConfigEnum.OUTPUT_BINNAME.value + " = " + binname);
         return binname;
     }
 
     public static void setOutputKeyName(Configuration conf, String keyname) {
-        log.info("setting " + OUTPUT_KEYNAME + " to " + keyname);
-        conf.set(OUTPUT_KEYNAME, keyname);
+        log.info("setting " + AerospikeConfigEnum.OUTPUT_KEYNAME.value + " to " + keyname);
+        conf.set(AerospikeConfigEnum.OUTPUT_KEYNAME.value, keyname);
     }
 
     public static String getOutputKeyName(Configuration conf) {
-        String keyname = conf.get(OUTPUT_KEYNAME);
-        log.info("using " + OUTPUT_KEYNAME + " = " + keyname);
+        String keyname = conf.get(AerospikeConfigEnum.OUTPUT_KEYNAME.value);
+        log.info("using " + AerospikeConfigEnum.OUTPUT_KEYNAME.value + " = " + keyname);
         return keyname;
     }
 

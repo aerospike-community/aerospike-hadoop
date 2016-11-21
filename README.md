@@ -28,27 +28,21 @@ the sessions are found.
 
 Install Hadoop
 ----------------------------------------------------------------
+Examples below are tested with Aerospike Java Client (version: 3.3.0) and Hadoop (version: 2.7.2)
 
-    export HADOOPVER=2.5.1
+Hadoop installation guide [link](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/SingleCluster.html)
 
-    cd /usr/local/dist
-    wget http://mirrors.ibiblio.org/apache/hadoop/common/stable/hadoop-${HADOOPVER}.tar.gz
-    cd /usr/local
-    tar xvfz /usr/local/dist/hadoop-${HADOOPVER}.tar.gz
-    ln -s hadoop-${HADOOPVER} hadoop
-    
-    # Add default FS in /usr/local/hadoop/etc/hadoop/core-site.xml
-
-    export HADOOP_PREFIX=/usr/local/hadoop
-
-
-Development Directory
+Then set up environment variable: 
 ----------------------------------------------------------------
 
+    Hadoop Installation Directory:
+    export HADOOP_PREFIX=/usr/local/hadoop
+
+	Development Directory:
     export AEROSPIKE_HADOOP=~/aerospike/aerospike-hadoop
 
 
-Building w/ Gradle
+Build w/ Gradle
 ----------------------------------------------------------------
 
     cd ${AEROSPIKE_HADOOP}
@@ -57,6 +51,7 @@ Building w/ Gradle
     ./gradlew :mapreduce:jar
 
     # Build the example programs.
+    ./gradlew :sampledata:installApp
     ./gradlew :examples:word_count_input:installApp
     ./gradlew :examples:aggregate_int_input:installApp
     ./gradlew :examples:word_count_output:installApp
@@ -64,12 +59,6 @@ Building w/ Gradle
     ./gradlew :examples:generate_profiles:installApp
     ./gradlew :examples:external_join:installApp
 
-
-Building w/ Maven (instead)
-----------------------------------------------------------------
-
-    cd ${AEROSPIKE_HADOOP}
-    mvn clean package
 
 
 Setup Target Input Text File
@@ -84,8 +73,7 @@ Setup Target Input Text File
 Start Aerospike
 ----------------------------------------------------------------
 
-    cd ~/aerospike/aerospike-server
-    make start
+    sudo /etc/init.d/aerospike start
 
 
 Setup Sample Data in Aerospike for Input Examples
@@ -104,7 +92,7 @@ Setup Sample Data in Aerospike for Input Examples
         localhost:3000:test:integers:bin1 seq-int 0 100000
 
 
-Running Input Examples
+Run Input Examples
 ----------------------------------------------------------------
 
     export HADOOP_PREFIX=/usr/local/hadoop
@@ -193,20 +181,15 @@ Setup Sample Data in HDFS for Output Examples
     $HADOOP_PREFIX/bin/hdfs dfs -rm -r /worldcup
     $HADOOP_PREFIX/bin/hdfs dfs -mkdir /worldcup
     $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal \
-        $HOME/aerospike/doc/data/WorldCup/wc_day52_1.log \
-        /worldcup/wc_day52_1.log
-    $HADOOP_PREFIX/bin/hadoop fs -copyFromLocal \
-        $HOME/aerospike/doc/data/WorldCup/wc_day52_2.log \
-        /worldcup/wc_day52_2.log
+        data/worldcup\
+        /worldcup/access.log
 
     # Create the secondary indexes in Aerospike.
-    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
-        -c 'CREATE INDEX useridndx ON test.sessions (userid) NUMERIC'
-    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
-        -c 'CREATE INDEX startndx ON test.sessions (start) NUMERIC'
+    aql -c 'CREATE INDEX useridndx ON test.sessions (userid) NUMERIC'
+    aql -c 'CREATE INDEX startndx ON test.sessions (start) NUMERIC'
 
 
-Running Output Examples
+Run Output Examples
 ----------------------------------------------------------------
 
     # Run the Hadoop job.
@@ -221,8 +204,7 @@ Running Output Examples
         /tmp/words
 
     # Inspect the results:
-    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
-        -c 'SELECT * FROM test.counts'
+    aql -c 'SELECT * FROM test.counts'
 
     # -- OR --
 
@@ -233,12 +215,10 @@ Running Output Examples
         -D aerospike.output.namespace=test \
         -D aerospike.output.setname=sessions \
         -D mapred.reduce.tasks=30 \
-        /worldcup/wc_day52_1.log \
-        /worldcup/wc_day52_2.log
+        /worldcup/access.log
 
     # Inspect the results:
-    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
-        -c 'SELECT * FROM test.sessions'
+    aql -c 'SELECT * FROM test.sessions'
 
     # -- OR --
 
@@ -249,12 +229,10 @@ Running Output Examples
         -D aerospike.output.namespace=test \
         -D aerospike.output.setname=profiles \
         -D mapred.reduce.tasks=30 \
-        /worldcup/wc_day52_1.log \
-        /worldcup/wc_day52_2.log
+        /worldcup/access.log
 
     # Inspect the results:
-    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
-        -c 'SELECT * FROM test.profiles'
+    aql -c 'SELECT * FROM test.profiles'
 
     # -- AND --
 
@@ -267,29 +245,11 @@ Running Output Examples
         -D aerospike.output.namespace=test \
         -D aerospike.output.setname=sessions2 \
         -D mapred.reduce.tasks=30 \
-        /worldcup/wc_day52_1.log \
-        /worldcup/wc_day52_2.log
+        /worldcup/access.log
 
     # Inspect the results:
-    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
-        -c 'SELECT * FROM test.sessions2'
-
-Running the Spark Session Rollup Example
-----------------------------------------------------------------
-
-    # Start Spark.
-
-    cd ${AEROSPIKE_HADOOP}/examples/spark_session_rollup
-
-    # Run the example    
-    java -jar build/libs/spark_session_rollup-1.0.0-driver.jar
-
-    # Inspect the results:
-    ~/aerospike/aerospike-tools/asql/target/Linux-x86_64/bin/aql \
-        -c 'SELECT * FROM test.sessions3'
-
-    # Stop Spark.
-
+    aql -c 'SELECT * FROM test.sessions2'
+./gradlew :examples:word_count_input:installApp
 
 Done with HDFS
 ----------------------------------------------------------------
