@@ -84,10 +84,13 @@ public class AerospikeInputFormat
             String numrangeBin = "";
             long numrangeBegin = 0;
             long numrangeEnd = 0;
+            int scanPercent = 100;
             if (oper.equals("numrange")) {
                 numrangeBin = AerospikeConfigUtil.getInputNumRangeBin(job);
                 numrangeBegin = AerospikeConfigUtil.getInputNumRangeBegin(job);
                 numrangeEnd = AerospikeConfigUtil.getInputNumRangeEnd(job);
+            } else if (oper.equals("scan")) {
+                scanPercent = AerospikeConfigUtil.getInputScanPercent(job);
             }
             
             log.info(String.format("using: %s %d %s %s",
@@ -125,7 +128,7 @@ public class AerospikeInputFormat
                                                 nodehost.name, nodehost.port,
                                                 namespace, setName, binNames,
                                                 numrangeBin, numrangeBegin,
-                                                numrangeEnd);
+                                                numrangeEnd, scanPercent);
                 log.info("split: " + splits[ii]);
             }
             return splits;

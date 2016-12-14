@@ -40,6 +40,7 @@ public class AerospikeSplit
     private String numrangeBin;
     private long numrangeBegin;
     private long numrangeEnd;
+    private int scanPercent;
 
     AerospikeSplit() {
     }
@@ -47,7 +48,7 @@ public class AerospikeSplit
     public AerospikeSplit(String type, String node, String host, int port,
                           String ns, String setName, String[] binNames,
                           String numrangeBin, long numrangeBegin,
-                          long numrangeEnd) {
+                          long numrangeEnd, int scanPercent) {
         this.type = type;
         this.node = node;
         this.host = host;
@@ -58,6 +59,7 @@ public class AerospikeSplit
         this.numrangeBin = numrangeBin;
         this.numrangeBegin = numrangeBegin;
         this.numrangeEnd = numrangeEnd;
+        this.scanPercent = scanPercent;
     }
 
     public String getType() {
@@ -100,6 +102,8 @@ public class AerospikeSplit
         return numrangeEnd;
     }
 
+    public int getScanPercent() { return scanPercent; }
+
     public long getLength() {
         return 1;
     }
@@ -126,6 +130,7 @@ public class AerospikeSplit
         Text.writeString(out, numrangeBin);
         out.writeLong(numrangeBegin);
         out.writeLong(numrangeEnd);
+        out.writeInt(scanPercent);
     }
 
     public void readFields(DataInput in) throws IOException {
@@ -146,6 +151,7 @@ public class AerospikeSplit
         numrangeBin = new String(Text.readString(in));
         numrangeBegin = in.readLong();
         numrangeEnd = in.readLong();
+        scanPercent = in.readInt();
     }
 
     public String[] getLocations() throws IOException {

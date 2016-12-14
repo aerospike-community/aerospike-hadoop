@@ -30,7 +30,7 @@ public class AerospikeConfigUtil {
 
     public static final int DEFAULT_INPUT_PORT = 3000;
     public static final long INVALID_LONG = 762492121482318889L;
-
+    public static final int DEFAULT_INPUT_SCAN_PERCENT = 100;
     // ---------------- OUTPUT ----------------
 
     public static final int DEFAULT_OUTPUT_PORT = 3000;
@@ -156,6 +156,14 @@ public class AerospikeConfigUtil {
         return end;
     }
 
+    public static int getInputScanPercent(Configuration conf) {
+        int scanPercent = conf.getInt(AerospikeConfigEnum.INPUT_SCAN_PERCENT.value, DEFAULT_INPUT_SCAN_PERCENT);
+        if (scanPercent <= 0)
+            throw new UnsupportedOperationException
+                    ("scan percent is less than 1%");
+        log.info("using " + AerospikeConfigEnum.INPUT_SCAN_PERCENT.value + " = " + scanPercent + "%");
+        return scanPercent;
+    }
     // ---------------- OUTPUT ----------------
 
     public static void setOutputHost(Configuration conf, String host) {
