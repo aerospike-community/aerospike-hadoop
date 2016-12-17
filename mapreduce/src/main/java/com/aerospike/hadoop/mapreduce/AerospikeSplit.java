@@ -46,9 +46,15 @@ public class AerospikeSplit
     }
 
     public AerospikeSplit(String type, String node, String host, int port,
-                          String ns, String setName, String[] binNames,
-                          String numrangeBin, long numrangeBegin,
-                          long numrangeEnd, int scanPercent) {
+            String ns, String setName, String[] binNames,
+            String numrangeBin, long numrangeBegin, long numrangeEnd) {
+    	this(type, node, host, port, ns, setName, binNames, numrangeBin, numrangeBegin, numrangeEnd, AerospikeConfigUtil.DEFAULT_INPUT_SCAN_PERCENT);
+    }
+    
+    public AerospikeSplit(String type, String node, String host, int port,
+            String ns, String setName, String[] binNames,
+            String numrangeBin, long numrangeBegin,
+            long numrangeEnd, int scanPercent) {
         this.type = type;
         this.node = node;
         this.host = host;
