@@ -13,6 +13,7 @@ public enum AerospikeConfigEnum {
     DEFAULT_INPUT_BINNAMES(""),
     INPUT_OPERATION("aerospike.input.operation"),
     DEFAULT_INPUT_OPERATION("scan"),
+    INPUT_SCAN_PERCENT("aerospike.input.scan.percent"),
     INPUT_NUMRANGE_BIN("aerospike.input.numrange.bin"),
     INPUT_NUMRANGE_BEGIN("aerospike.input.numrange.begin"),
     INPUT_NUMRANGE_END("aerospike.input.numrange.end"),

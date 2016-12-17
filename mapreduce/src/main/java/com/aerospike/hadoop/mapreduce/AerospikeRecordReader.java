@@ -69,6 +69,7 @@ public class AerospikeRecordReader
     private String numrangeBin;
     private long numrangeBegin;
     private long numrangeEnd;
+    private int scanPercent;
     
     private AerospikeKey currentKey;
     private AerospikeRecord currentValue;
@@ -94,15 +95,17 @@ public class AerospikeRecordReader
         String namespace;
         String setName;
         String[] binNames;
+        int scanPercent;
 
         ASSCanReader(String node, String host, int port,
-                     String ns, String setName, String[] binNames) {
+                     String ns, String setName, String[] binNames, int scanPercent) {
             this.node = node;
             this.host = host;
             this.port = port;
             this.namespace = ns;
             this.setName = setName;
             this.binNames = binNames;
+            this.scanPercent = scanPercent;
         }
 
         public void run() {
@@ -114,8 +117,9 @@ public class AerospikeRecordReader
                 log.info(String.format("scanNode %s:%d:%s:%s",
                                        host, port, namespace, setName));
                 ScanPolicy scanPolicy = new ScanPolicy();
+                scanPolicy.scanPercent = scanPercent;
                 CallBack cb = new CallBack();
-                log.info("scan starting");
+                log.info("scan starting with scan percent: " + scanPolicy.scanPercent + "%");
                 isRunning = true;
                 if (binNames != null) 
                     client.scanNode(scanPolicy, node, namespace, setName,
@@ -227,10 +231,11 @@ public class AerospikeRecordReader
         this.numrangeBin = split.getNumRangeBin();
         this.numrangeBegin = split.getNumRangeBegin();
         this.numrangeEnd = split.getNumRangeEnd();
+        this.scanPercent = split.getScanPercent();
 
         if (type.equals("scan")) {
             scanReader = new ASSCanReader(node, host, port, namespace,
-                                          setName, binNames);
+                                          setName, binNames, scanPercent);
             scanReader.start();
         } else if (type.equals("numrange")) {
             queryReader = new ASQueryReader(node, host, port, namespace,
