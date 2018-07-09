@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more
@@ -60,7 +60,7 @@ public class AerospikeRecordReader
     private ASSCanReader scanReader = null;
     private ASQueryReader queryReader = null;
 
-    private ArrayBlockingQueue<KeyRecPair> queue = 
+    private ArrayBlockingQueue<KeyRecPair> queue =
         new ArrayBlockingQueue<KeyRecPair>(16 * 1024);
 
     private boolean isFinished = false;
@@ -70,7 +70,7 @@ public class AerospikeRecordReader
     private long numrangeBegin;
     private long numrangeEnd;
     private int scanPercent;
-    
+
     private AerospikeKey currentKey;
     private AerospikeRecord currentValue;
 
@@ -118,10 +118,12 @@ public class AerospikeRecordReader
                                        host, port, namespace, setName));
                 ScanPolicy scanPolicy = new ScanPolicy();
                 scanPolicy.scanPercent = scanPercent;
+                // NOTE(stephan): be more patient with the aerospike socket being idle.
+                scanPolicy.socketTimeout = 1000 * 1000;
                 CallBack cb = new CallBack();
                 log.info("scan starting with scan percent: " + scanPolicy.scanPercent + "%");
                 isRunning = true;
-                if (binNames != null) 
+                if (binNames != null)
                     client.scanNode(scanPolicy, node, namespace, setName,
                                     cb, binNames);
                 else
@@ -285,20 +287,21 @@ public class AerospikeRecordReader
     public synchronized boolean next(AerospikeKey key, AerospikeRecord value)
         throws IOException {
 
-        final int waitMSec = 1000;
-        int trials = 5;
+        // NOTE(stephan): be far more tolerant of data coming out of Aerospike slowly
+        final int waitMSec = 2000;
+        int trials = 300;
 
         try {
             KeyRecPair pair;
             while (true) {
                 if (isError)
                     return false;
-                
+
                 if (!isRunning) {
                     Thread.sleep(100);
                     continue;
                 }
-            
+
                 if (!isFinished && queue.size() == 0) {
                     if (trials == 0) {
                         log.error("SCAN TIMEOUT");
