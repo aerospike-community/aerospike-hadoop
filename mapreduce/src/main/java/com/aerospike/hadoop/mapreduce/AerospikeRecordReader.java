@@ -118,6 +118,8 @@ public class AerospikeRecordReader
                                        host, port, namespace, setName));
                 ScanPolicy scanPolicy = new ScanPolicy();
                 scanPolicy.scanPercent = scanPercent;
+                // NOTE(stephan): be more patient with the aerospike socket being idle.
+                scanPolicy.socketTimeout = 1000 * 1000;
                 CallBack cb = new CallBack();
                 log.info("scan starting with scan percent: " + scanPolicy.scanPercent + "%");
                 isRunning = true;
@@ -285,10 +287,9 @@ public class AerospikeRecordReader
     public synchronized boolean next(AerospikeKey key, AerospikeRecord value)
         throws IOException {
 
+        // NOTE(stephan): be far more tolerant of data coming out of Aerospike slowly
         final int waitMSec = 2000;
-
-        // NOTE(sean): be far more tolerate of data coming out of Aerospike slowly
-        int trials = 50;
+        int trials = 300;
 
         try {
             KeyRecPair pair;
