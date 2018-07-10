@@ -35,6 +35,7 @@ import com.aerospike.client.Record;
 import com.aerospike.client.ScanCallback;
 import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.QueryPolicy;
+import com.aerospike.client.policy.Priority;
 import com.aerospike.client.policy.ScanPolicy;
 import com.aerospike.client.query.Filter;
 import com.aerospike.client.query.RecordSet;
@@ -118,6 +119,8 @@ public class AerospikeRecordReader
                                        host, port, namespace, setName));
                 ScanPolicy scanPolicy = new ScanPolicy();
                 scanPolicy.scanPercent = scanPercent;
+                // NOTE(stephan) set scan priority to high
+                scanPolicy.priority = Priority.HIGH;
                 // NOTE(stephan): be more patient with the aerospike socket being idle.
                 scanPolicy.socketTimeout = 1000 * 1000;
                 CallBack cb = new CallBack();
