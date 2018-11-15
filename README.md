@@ -28,7 +28,7 @@ the sessions are found.
 
 Install Hadoop
 ----------------------------------------------------------------
-Examples below are tested with Aerospike Java Client (version: 3.3.0) and Hadoop (version: 2.7.2)
+Examples below are tested with Aerospike Java Client (version: 4.2.2) and Hadoop (version: 2.7.2)
 
 Hadoop installation guide [link](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/SingleCluster.html)
 

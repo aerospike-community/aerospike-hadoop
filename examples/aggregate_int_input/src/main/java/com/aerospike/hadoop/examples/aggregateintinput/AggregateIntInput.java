@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 Aerospike, Inc.
+ * Copyright 2018 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more
  * contributor license agreements.
@@ -19,25 +19,21 @@
 package com.aerospike.hadoop.examples.aggregateintinput;
 
 import java.io.IOException;
-import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com.aerospike.hadoop.mapreduce.AerospikeConfigUtil;
 import com.aerospike.hadoop.mapreduce.AerospikeInputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeKey;
 import com.aerospike.hadoop.mapreduce.AerospikeRecord;

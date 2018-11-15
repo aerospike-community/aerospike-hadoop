@@ -22,9 +22,7 @@ import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.Progressable;
@@ -40,8 +38,6 @@ public abstract class AerospikeRecordWriter<KK, VV>
     private static final Log log =
         LogFactory.getLog(AerospikeRecordWriter.class);
 
-    private static final int NO_TASK_ID = -1;
-
     protected final Configuration cfg;
     protected boolean initialized = false;
 
@@ -50,11 +46,8 @@ public abstract class AerospikeRecordWriter<KK, VV>
     private static AerospikeClient client;
     private static WritePolicy writePolicy;
 
-    private Progressable progressable;
-
-    public AerospikeRecordWriter(Configuration cfg, Progressable progressable) {
+    public AerospikeRecordWriter(Configuration cfg) {
         this.cfg = cfg;
-        this.progressable = progressable;
     }
 
     public abstract void writeAerospike(KK key,
@@ -100,7 +93,6 @@ public abstract class AerospikeRecordWriter<KK, VV>
         doClose(context);
     }
 
-    @Override
     public void close(org.apache.hadoop.mapred.Reporter reporter
                       ) throws IOException {
         doClose(reporter);
