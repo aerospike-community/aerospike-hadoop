@@ -26,6 +26,31 @@ The most interesting example is likely the session rollup example.  In
 this example, the session management state is output to Aerospike as
 the sessions are found.
 
+
+Configuration options and defaults
+----------------------------------------------------------------
+Input
+
+    aerospike.input.host ["localhost"]
+    aerospike.input.port [3000]
+    aerospike.input.namespace
+    aerospike.input.setname
+    aerospike.input.binnames [""]
+    aerospike.input.operation ["scan"]
+    aerospike.input.numrange.bin
+    aerospike.input.numrange.begin
+    aerospike.input.numrange.end
+
+Output
+
+    aerospike.output.host ["localhost"]
+    aerospike.output.port [3000]
+    aerospike.output.namespace
+    aerospike.output.setname
+    aerospike.output.binname
+    aerospike.output.keyname
+
+
 Install Hadoop
 ----------------------------------------------------------------
 Examples below are tested with Aerospike Java Client (version: 4.2.2) and Hadoop (version: 2.7.2)
