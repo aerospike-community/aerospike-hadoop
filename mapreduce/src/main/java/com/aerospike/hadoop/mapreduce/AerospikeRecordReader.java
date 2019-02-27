@@ -75,7 +75,6 @@ public class AerospikeRecordReader
     private AerospikeRecord currentValue;
 
     public class CallBack implements ScanCallback {
-        @Override
         public void scanCallback(Key key, Record record)
             throws AerospikeException {
             try {

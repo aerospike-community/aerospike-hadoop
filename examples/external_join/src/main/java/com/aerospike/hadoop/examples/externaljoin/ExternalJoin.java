@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 Aerospike, Inc.
+ * Copyright 2018 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more
  * contributor license agreements.
@@ -21,60 +21,49 @@ package com.aerospike.hadoop.examples.externaljoin;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
-
 import java.nio.ByteBuffer;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.StringTokenizer;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.util.GenericOptionsParser;
-import org.apache.hadoop.util.Progressable;
-import org.apache.hadoop.util.Tool;
-import org.apache.hadoop.util.ToolRunner;
-
 import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.TextOutputFormat;
+import org.apache.hadoop.util.Progressable;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 import com.aerospike.client.Record;
-import com.aerospike.client.policy.ClientPolicy;
-import com.aerospike.client.policy.WritePolicy;
 import com.aerospike.client.policy.Policy;
-
+import com.aerospike.client.policy.WritePolicy;
+import com.aerospike.hadoop.mapreduce.AerospikeConfigUtil;
 import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeRecordWriter;
-import com.aerospike.hadoop.mapreduce.AerospikeConfigUtil;
 
 public class ExternalJoin extends Configured implements Tool {
 
@@ -171,7 +160,7 @@ public class ExternalJoin extends Configured implements Tool {
             int port = AerospikeConfigUtil.getInputPort(job);
 
             policy = new Policy();
-            policy.timeout = 10000;
+            policy.totalTimeout = 10000;
             client = new AerospikeClient(host, port);
 
             namespace = AerospikeConfigUtil.getInputNamespace(job);
@@ -272,7 +261,7 @@ public class ExternalJoin extends Configured implements Tool {
 
             public SessionRecordWriter(Configuration cfg,
                                        Progressable progressable) {
-                super(cfg, progressable);
+                super(cfg);
             }
 
             @Override
@@ -282,7 +271,7 @@ public class ExternalJoin extends Configured implements Tool {
                                        WritePolicy writePolicy,
                                        String namespace,
                                        String setName) throws IOException {
-                writePolicy.timeout = 10000;
+                writePolicy.totalTimeout = 10000;
                 Key kk = new Key(namespace, setName, sessid.toString());
                 Bin bin0 = new Bin("userid", session.userid);
                 Bin bin1 = new Bin("start", session.start);

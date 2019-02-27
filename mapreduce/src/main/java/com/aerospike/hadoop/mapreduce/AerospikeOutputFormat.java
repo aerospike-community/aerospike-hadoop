@@ -22,7 +22,6 @@ import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -153,7 +152,7 @@ public abstract class AerospikeOutputFormat<KK, VV>
     //
     // old API
     //
-    @Override
+    @Deprecated
     public org.apache.hadoop.mapred.RecordWriter<KK, VV>
         getRecordWriter(FileSystem ignored,
                         org.apache.hadoop.mapred.JobConf job,
@@ -161,7 +160,7 @@ public abstract class AerospikeOutputFormat<KK, VV>
         return getAerospikeRecordWriter(job, progress);
     }
 
-    @Override
+    @Deprecated
     public void checkOutputSpecs(FileSystem ignored,
                                  org.apache.hadoop.mapred.JobConf cfg)
         throws IOException {

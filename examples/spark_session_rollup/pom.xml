@@ -2,20 +2,19 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.aerospike</groupId>
   <artifactId>spark_session_rollup</artifactId>
-  <version>1.0.0</version>
+  
+  <parent>
+    <groupId>com.aerospike</groupId>
+    <artifactId>aerospike-hadoop-examples</artifactId>
+    <version>1.1.0-SNAPSHOT</version>
+  </parent>
+  
   <dependencies>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
-      <version>1.1.0</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-client</artifactId>
-      <version>2.7.2</version>
+      <artifactId>spark-core_2.11</artifactId>
+      <version>2.4.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -26,15 +25,7 @@
     </dependency>
     <dependency>
       <groupId>com.aerospike</groupId>
-      <artifactId>aerospike-client</artifactId>
-      <version>3.3.0</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.aerospike</groupId>
       <artifactId>aerospike-mapreduce</artifactId>
-      <version>1.0.1</version>
-      <scope>compile</scope>
     </dependency>
   </dependencies>
   <build>

@@ -27,7 +27,6 @@ public class AerospikeLogger implements com.aerospike.client.Log.Callback {
 
     private static final Log log = LogFactory.getLog(AerospikeLogger.class);
 
-	@Override
 	public void log(Level level, String message) {
         switch (level) {
         case ERROR:
