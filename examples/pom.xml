@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.aerospike</groupId>
   <artifactId>aerospike-hadoop-examples</artifactId>
-  <version>1.0.0</version>
   <packaging>pom</packaging>
+
+  <parent>
+    <groupId>com.aerospike</groupId>
+    <artifactId>aerospike-hadoop-parent</artifactId>
+    <version>1.1.0-SNAPSHOT</version>
+  </parent>
 
   <modules>
     <module>word_count_input</module>
@@ -16,5 +22,16 @@
     <module>external_join</module>
     <module>spark_session_rollup</module>
   </modules>
+  
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.aerospike</groupId>
+        <artifactId>aerospike-mapreduce</artifactId>
+        <version>1.1.0-SNAPSHOT</version>
+        <scope>compile</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
 </project>

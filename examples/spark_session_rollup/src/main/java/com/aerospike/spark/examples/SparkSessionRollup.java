@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 Aerospike, Inc.
+ * Copyright 2018 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more
  * contributor license agreements.
@@ -19,50 +19,41 @@
 package com.aerospike.spark.examples;
 
 import java.io.IOException;
-
 import java.nio.ByteBuffer;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Hex;
-
-import org.apache.spark.api.java.function.PairFlatMapFunction;
-import org.apache.spark.api.java.function.PairFunction;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RecordWriter;
+import org.apache.hadoop.util.Progressable;
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.SparkConf;
-
-import scala.Tuple2;
-
-import org.apache.hadoop.conf.Configuration;
-
-import org.apache.hadoop.mapred.RecordWriter;
-import org.apache.hadoop.mapred.JobConf;
-
-import org.apache.hadoop.util.Progressable;
+import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.api.java.function.PairFunction;
 
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
-import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.WritePolicy;
-
 import com.aerospike.hadoop.mapreduce.AerospikeConfigUtil;
+import com.aerospike.hadoop.mapreduce.AerospikeLogger;
 import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeRecordWriter;
-import com.aerospike.hadoop.mapreduce.AerospikeLogger;
+
+import scala.Tuple2;
 
 public class SparkSessionRollup {
 
@@ -71,8 +62,9 @@ public class SparkSessionRollup {
 
     public static class ExtractHits
         implements PairFunction<String, Long, Long> {
+		private static final long serialVersionUID = 1L;
 
-        // Sample line format:
+		// Sample line format:
         // 37518 - - [16/Jun/1998:02:48:36 +0000] "GET /images/hm_hola.gif HTTP/1.0" 200 2240
         final String logEntryRegex = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+)";
         final Pattern pat = Pattern.compile(logEntryRegex);
@@ -113,10 +105,11 @@ public class SparkSessionRollup {
     public static class FindSessions
         implements PairFlatMapFunction<Tuple2<Long, Iterable<Long>>,
                                        String, Session> {
+		private static final long serialVersionUID = 1L;
 
-        private static final long SESSION_GAP_MSEC = 20 * 60 * 1000;
+		private static final long SESSION_GAP_MSEC = 20 * 60 * 1000;
 
-        public List<Tuple2<String, Session>>
+        public Iterator<Tuple2<String, Session>>
             call(Tuple2<Long, Iterable<Long>> tup) {
 
             List<Tuple2<String, Session>> results =
@@ -167,7 +160,7 @@ public class SparkSessionRollup {
                 collect_session(tup._1(), session_start, session_end,
                                 session_hits, results);
 
-            return results;
+            return results.iterator();
         }
 
         private void collect_session(long userid, long start,
@@ -199,7 +192,7 @@ public class SparkSessionRollup {
 
             public SessionRecordWriter(Configuration cfg,
                                        Progressable progressable) {
-                super(cfg, progressable);
+                super(cfg);
             }
 
             @Override

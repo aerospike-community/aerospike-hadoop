@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 Aerospike, Inc.
+ * Copyright 2018 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more
  * contributor license agreements.
@@ -30,30 +30,25 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.util.GenericOptionsParser;
-import org.apache.hadoop.util.Tool;
-import org.apache.hadoop.util.ToolRunner;
-
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.TextOutputFormat;
-
-import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
-
 // These are all needed by MyOutputFormat.
 import org.apache.hadoop.util.Progressable;
-import org.apache.hadoop.mapred.RecordWriter;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
+
 import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
-import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.WritePolicy;
+import com.aerospike.hadoop.mapreduce.AerospikeOutputFormat;
 import com.aerospike.hadoop.mapreduce.AerospikeRecordWriter;
 
 public class WordCountOutput extends Configured implements Tool {
@@ -102,7 +97,7 @@ public class WordCountOutput extends Configured implements Tool {
             extends AerospikeRecordWriter<Text, IntWritable> {
 
             public MyRecordWriter(Configuration cfg, Progressable progressable) {
-                super(cfg, progressable);
+                super(cfg);
             }
 
             @Override

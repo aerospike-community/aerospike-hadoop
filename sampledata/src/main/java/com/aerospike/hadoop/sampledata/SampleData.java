@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 Aerospike, Inc.
+ * Copyright 2018 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more
  * contributor license agreements.
@@ -30,7 +30,6 @@ import com.aerospike.client.Key;
 import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.WritePolicy;
 import com.aerospike.client.query.IndexType;
-import com.aerospike.client.Record;
 import com.aerospike.client.task.IndexTask;
 
 public class SampleData {
@@ -95,6 +94,7 @@ public class SampleData {
                 client.put(writePolicy, key, bin);
             }
             log.info("inserted " + nrecs + " records");
+            br.close();
         }
     }
 
