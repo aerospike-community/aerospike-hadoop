@@ -22,7 +22,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>3.8.1</junit.version>
-    <aerospike.client.version>4.2.2</aerospike.client.version>
+    <aerospike.client.version>4.3.1</aerospike.client.version>
     <hadoop.version>2.7.2</hadoop.version>
   </properties>
 

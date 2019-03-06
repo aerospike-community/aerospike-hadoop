@@ -117,8 +117,6 @@ public class AerospikeRecordReader
                                        host, port, namespace, setName));
                 ScanPolicy scanPolicy = new ScanPolicy();
                 scanPolicy.scanPercent = scanPercent;
-                // NOTE(stephan): be more patient with the aerospike socket being idle.
-                scanPolicy.socketTimeout = 1000 * 1000;
                 CallBack cb = new CallBack();
                 log.info("scan starting with scan percent: " + scanPolicy.scanPercent + "%");
                 isRunning = true;
