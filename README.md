@@ -26,6 +26,8 @@ The most interesting example is likely the session rollup example.  In
 this example, the session management state is output to Aerospike as
 the sessions are found.
 
+See the [Wiki](https://github.com/aerospike-community/aerospike-hadoop/wiki) for more.
+
 Install Hadoop
 ----------------------------------------------------------------
 Examples below are tested with Aerospike Java Client (version: 4.2.2) and Hadoop (version: 2.7.2)
